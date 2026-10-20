@@ -58,6 +58,13 @@ input,select,textarea{font-family:inherit;font-size:inherit}
 .btn.sm{min-height:32px;padding:0 14px;font-size:15px;border-radius:16px;font-weight:600}
 .btn.sm.warm-on{background:rgba(255,159,10,.2);color:#ffb340}
 
+/* 方形入口卡 */
+.sq{flex:1;aspect-ratio:1;background:var(--card);border-radius:16px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:6px;text-align:center;padding:10px}
+.sq b{font-size:34px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+.sq span{font-size:12px;color:var(--dim);line-height:1.35}
+.sq:active{background:var(--card2)}
+
 /* 热量日历 */
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
 .calh{font-size:11px;color:var(--dim);text-align:center;padding-bottom:2px}
@@ -271,7 +278,7 @@ input.num:focus{outline:none;box-shadow:0 0 0 2px rgba(194,44,44,.5)}
 (function(){
 "use strict";
 
-var VER = "v3.0";
+var VER = "v3.1";
 var QUOTES = [
   "没人看见的训练最算数。",
   "身体会记住你今天做的事。",
@@ -329,7 +336,7 @@ var DEF = [
 var db, ui = { tab:"train", pick:false, foodPick:false, foodForm:false, foodQ:"", foodCat:"",
   nfMode:"serving", nfDraft:null, edit:null, open:null, toastT:null,
   exForm:false, exKind:"strength", exCat:"胸", exAssist:false, exMet:7, exName:"", exInc:false, exQ:"",
-  onboard:false, obSex:"m", eggT:null, setPage:"", warm:false };
+  onboard:false, obSex:"m", eggT:null, setPage:"", histPage:"", warm:false };
 
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 
@@ -935,19 +942,6 @@ function viewTrain(){
       (last ? '<button class="btn block" data-act="wo:copy" style="margin-top:12px">照上次练</button>' : '') +
       '</div>';
 
-    if (n){
-      s += '<div class="card"><div class="spread" style="text-align:center">' +
-        '<div style="flex:1"><div style="font-size:28px;font-weight:700;font-variant-numeric:tabular-nums">' + wk.count + '</div>' +
-        '<div class="dim" style="font-size:13px">本周训练</div></div>' +
-        '<div style="flex:1"><div style="font-size:28px;font-weight:700;font-variant-numeric:tabular-nums">' + wk.volume + '</div>' +
-        '<div class="dim" style="font-size:13px">容量 kg</div></div>' +
-        '<div style="flex:1"><div style="font-size:28px;font-weight:700;font-variant-numeric:tabular-nums">' + wk.kcal + '</div>' +
-        '<div class="dim" style="font-size:13px">消耗 千卡</div></div>' +
-        '</div></div>';
-    } else {
-      s += '<div class="card">' + emptyState("i-train", "还没有训练记录", "点上面的按钮开始第一次", null, null) + '</div>';
-    }
-
     if (last){
       s += '<div class="card"><div class="spread" style="margin-bottom:10px">' +
         '<h3 style="margin:0">上次训练</h3><span class="dim" style="font-size:13px">' + last.date + '</span></div>';
@@ -961,6 +955,19 @@ function viewTrain(){
       }
       if (last.entries.length > 4) s += '<div class="dim" style="font-size:13px;padding-top:6px">+ 还有 ' + (last.entries.length - 4) + ' 个动作</div>';
       s += '</div>';
+    } else {
+      s += '<div class="card">' + emptyState("i-train", "还没有训练记录", "点上面的按钮开始第一次", null, null) + '</div>';
+    }
+
+    if (n){
+      s += '<div class="card"><div class="spread" style="text-align:center">' +
+        '<div style="flex:1"><div style="font-size:28px;font-weight:700;font-variant-numeric:tabular-nums">' + wk.count + '</div>' +
+        '<div class="dim" style="font-size:13px">本周训练</div></div>' +
+        '<div style="flex:1"><div style="font-size:28px;font-weight:700;font-variant-numeric:tabular-nums">' + wk.volume + '</div>' +
+        '<div class="dim" style="font-size:13px">容量 kg</div></div>' +
+        '<div style="flex:1"><div style="font-size:28px;font-weight:700;font-variant-numeric:tabular-nums">' + wk.kcal + '</div>' +
+        '<div class="dim" style="font-size:13px">消耗 千卡</div></div>' +
+        '</div></div>';
     }
     return s;
   }
@@ -1175,7 +1182,42 @@ function volume(w){
   return Math.round(v);
 }
 
+function prPage(){
+  var prs = prList();
+  if (!prs.length) return '<div class="card"><div class="empty">还没有纪录<br>记录几次训练就有了</div></div>';
+  var s = '<div class="card">';
+  var lim = Math.min(prs.length, 20);
+  for (var pi=0;pi<lim;pi++){
+    var pr = prs[pi];
+    s += '<div class="spread" style="padding:11px 0;border-bottom:.5px solid var(--sep)">' +
+      '<span style="font-size:15px">' + esc(pr.name) + '</span>' +
+      '<span style="font-size:14px;color:#ffb340;font-variant-numeric:tabular-nums">1RM ' +
+      Math.round(pr.e1) + 'kg<span class="dim" style="margin-left:8px">' +
+      fmtW(pr.w) + '×' + pr.r + '</span></span></div>';
+  }
+  s += '<div class="dim" style="font-size:12px;margin-top:10px">1RM 按 Epley 公式估算，取该动作历史最好成绩' +
+    (prs.length > 20 ? '，只显示前 20 个' : '') + '。辅助与自重动作不参与排名。</div></div>';
+  return s;
+}
+function volumePage(){
+  var st = weekStats();
+  if (!st.total) return '<div class="card"><div class="empty">本周还没有训练记录</div></div>';
+  var order = GROUPS_ALL, mx = 1, s = '<div class="card">';
+  for (var q=0;q<order.length;q++){ if ((st.map[order[q]] || 0) > mx) mx = st.map[order[q]]; }
+  for (var q2=0;q2<order.length;q2++){
+    var gg = order[q2], nn = st.map[gg] || 0;
+    if (!nn) continue;
+    s += '<div class="mbar"><span class="ml">' + gg + '</span>' +
+      '<span class="mt"><i style="width:' + Math.round(nn/mx*100) + '%"></i></span>' +
+      '<span class="mn">' + nn + '</span></div>';
+  }
+  s += '<div class="dim" style="font-size:12px;margin-top:8px">单位：组。每个部位每周 10–20 组是常见参考，仅供参考。</div></div>';
+  return s;
+}
+
 function viewHist(){
+  if (ui.histPage === "pr") return subHead("个人纪录", "hist:back", "记录") + prPage();
+  if (ui.histPage === "volume") return subHead("本周肌群容量", "hist:back", "记录") + volumePage();
   var ws = db.workouts.slice().reverse();
   var wk = weekSummary();
   var s = pageHead("记录", ws.length ? "共 " + ws.length + " 次训练" : null);
@@ -1196,37 +1238,12 @@ function viewHist(){
     '<div class="dim" style="font-size:13px">本周消耗</div></div>' +
     '</div></div>';
 
-  var st = weekStats();
-  if (st.total){
-    var order = GROUPS_ALL;
-    var mx = 1;
-    for (var q=0;q<order.length;q++){ if ((st.map[order[q]] || 0) > mx) mx = st.map[order[q]]; }
-    s += '<div class="card"><h3>本周肌群容量</h3>';
-    for (var q2=0;q2<order.length;q2++){
-      var gg = order[q2], nn = st.map[gg] || 0;
-      if (!nn) continue;
-      s += '<div class="mbar"><span class="ml">' + gg + '</span>' +
-        '<span class="mt"><i style="width:' + Math.round(nn/mx*100) + '%"></i></span>' +
-        '<span class="mn">' + nn + '</span></div>';
-    }
-    s += '<div class="dim" style="font-size:12px;margin-top:4px">单位：组。每个部位每周 10–20 组是常见参考，仅供参考。</div></div>';
-  }
-
-  var prs = prList();
-  if (prs.length){
-    s += '<div class="card"><h3>个人纪录</h3>';
-    var lim = Math.min(prs.length, 12);
-    for (var pi=0;pi<lim;pi++){
-      var pr = prs[pi];
-      s += '<div class="spread" style="padding:8px 0;border-bottom:.5px solid var(--sep)">' +
-        '<span style="font-size:14px">' + esc(pr.name) + '</span>' +
-        '<span style="font-size:13px;color:#ffb340;font-variant-numeric:tabular-nums">1RM ' +
-        Math.round(pr.e1) + 'kg<span class="dim" style="margin-left:8px">' +
-        fmtW(pr.w) + '×' + pr.r + '</span></span></div>';
-    }
-    s += '<div class="dim" style="font-size:12px;margin-top:8px">1RM 按 Epley 公式估算，取该动作历史最好成绩' +
-      (prs.length > 12 ? '，只显示前 12 个' : '') + '。</div></div>';
-  }
+  var stW = weekStats();
+  var prsW = prList();
+  s += '<div class="row" style="gap:12px;margin:0 16px 16px;align-items:stretch">' +
+    '<div class="sq" data-act="hist:page" data-page="pr"><b>' + prsW.length + '</b><span>个<br>个人纪录</span></div>' +
+    '<div class="sq" data-act="hist:page" data-page="volume"><b>' + stW.total + '</b><span>组<br>本周训练量</span></div>' +
+    '</div>';
 
   for (var j=0;j<ws.length;j++){
     var w = ws[j], idx = db.workouts.length - 1 - j;
@@ -1241,7 +1258,9 @@ function viewHist(){
       '<div><div style="font-weight:700">' + esc(w.name || w.date) + '</div>' +
       (w.name ? '<div class="dim" style="font-size:12px">' + w.date + '</div>' : '') +
       '<div class="dim">' + sumParts.join(' · ') + '</div></div>' +
-      '<div class="dim">' + (open ? "收起" : "展开") + '</div></div>';
+      '<div class="row" style="gap:10px">' +
+      '<button class="btn sm" style="min-height:28px;padding:0 10px;font-size:12px" data-act="wo:rename" data-id="' + w.id + '">改名</button>' +
+      '<span class="dim" style="font-size:13px">' + (open ? "收起" : "展开") + '</span></div></div>';
     if (open){
       s += '<div style="margin-top:12px">';
       for (var k=0;k<w.entries.length;k++){
@@ -1278,7 +1297,6 @@ function viewHist(){
         s += '</div>';
       }
       s += '<div class="row" style="gap:10px;margin-top:12px;flex-wrap:wrap">' +
-        '<button class="btn sm" data-act="wo:rename" data-id="' + w.id + '">改名</button>' +
         '<button class="btn sm danger" data-act="hist:del" data-id="' + w.id + '">删除这次训练</button></div></div>';
     }
     s += '</div>';
@@ -1450,8 +1468,6 @@ function viewFood(){
     s += '<div class="dim" style="font-size:12px;margin-top:4px">单位：克。蛋白按体重 ×1.6、脂肪 ×0.8 估算，碳水由总热量倒推。</div></div>';
   }
 
-  s += balanceCard() + vitaminCard() + calendarCard();
-
   s += '<div class="card"><div class="spread" style="margin-bottom:10px"><h3 style="margin:0">今天吃了什么</h3>' +
     '<button class="btn sm primary" data-act="meal:open">+ 添加</button></div>';
   if (!meals.length) s += '<div class="dim" style="padding:4px 2px">还没记，点右上「添加」</div>';
@@ -1465,6 +1481,8 @@ function viewFood(){
       '<button class="iconbtn" data-act="meal:del" data-id="' + m.id + '">✕</button></div>';
   }
   s += '</div>';
+
+  s += balanceCard() + vitaminCard() + calendarCard();
 
   s += '<div class="card"><div class="spread" style="margin-bottom:10px"><h3 style="margin:0">我的食物</h3>' +
     '<button class="btn sm" data-act="food:new">+ 新增</button></div>';
@@ -1601,9 +1619,9 @@ function addMeal(foodId){
 }
 
 /* ===== 设置（二级菜单） ===== */
-function subHead(title){
+function subHead(title, backAct, backLabel){
   return '<div style="margin:12px 16px 0">' +
-    '<button class="btn sm ghost" data-act="set:back" style="padding:0;min-height:28px;font-size:15px">‹ 设置</button></div>' +
+    '<button class="btn sm ghost" data-act="' + (backAct || "set:back") + '" style="padding:0;min-height:28px;font-size:15px">‹ ' + (backLabel || "设置") + '</button></div>' +
     '<h1 class="pt" style="margin-top:6px">' + title + '</h1>';
 }
 function menuRow(title, sub, page){
@@ -1973,7 +1991,7 @@ document.addEventListener("click", function(ev){
   var act = t.getAttribute("data-act");
 
   if (act === "tab"){
-    ui.tab = t.getAttribute("data-tab"); ui.edit = null; ui.setPage = "";
+    ui.tab = t.getAttribute("data-tab"); ui.edit = null; ui.setPage = ""; ui.histPage = "";
     var mm = document.getElementById("main");
     if (mm) mm.scrollTop = 0;
     render(); return;
@@ -2255,6 +2273,8 @@ document.addEventListener("click", function(ev){
     save(); render(); toast(rw.name ? "已命名" : "已恢复默认");
     return;
   }
+  if (act === "hist:page"){ ui.histPage = t.getAttribute("data-page") || ""; render(); return; }
+  if (act === "hist:back"){ ui.histPage = ""; render(); return; }
   if (act === "hist:del"){
     var wid2 = t.getAttribute("data-id");
     if (confirm("删除这次训练记录？")){
