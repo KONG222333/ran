@@ -17,7 +17,7 @@
   --bg:#000; --card:#1c1c1e; --card2:#2c2c2e; --sep:rgba(84,84,88,.6);
   --txt:#fff; --dim:#8e8e93; --dim2:#636366;
   --acc:#c22c2c; --acc2:#9c1f1f; --ok:#30d158; --warn:#ff9f0a;
-  --r:12px; --tabh:50px; --safe-b:env(safe-area-inset-bottom);
+  --r:14px; --tabh:50px; --safe-b:env(safe-area-inset-bottom);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0;background:var(--bg);color:var(--txt);
@@ -37,10 +37,10 @@ input,select,textarea{font-family:inherit;font-size:inherit}
 
 #main{padding:0 0 calc(var(--tabh) + var(--safe-b) + 28px);max-width:600px;margin:0 auto;
   min-height:100vh;min-height:100dvh}
-.pt{font-size:34px;line-height:1.12;font-weight:800;letter-spacing:-.7px;margin:14px 16px 3px}
-.psub{font-size:15px;color:var(--dim);margin:0 16px 18px}
-.card{background:var(--card);border-radius:var(--r);padding:16px;margin:0 16px 16px}
-.card h3{margin:0 0 12px;font-size:17px;font-weight:600}
+.pt{font-size:34px;line-height:1.1;font-weight:800;letter-spacing:-.8px;margin:16px 16px 3px}
+.psub{font-size:15px;color:var(--dim);margin:0 16px 20px}
+.card{background:var(--card);border-radius:var(--r);padding:16px;margin:0 16px 14px}
+.card h3{margin:0 0 12px;font-size:17px;font-weight:600;letter-spacing:-.2px}
 .dim{color:var(--dim);font-size:15px}
 .row{display:flex;align-items:center;gap:10px}
 .spread{display:flex;align-items:center;justify-content:space-between;gap:12px}
@@ -168,10 +168,26 @@ select.search{appearance:none;-webkit-appearance:none}
   -webkit-overflow-scrolling:touch}
 #sheet::before{content:"";position:absolute;top:8px;left:50%;transform:translateX(-50%);
   width:36px;height:5px;border-radius:3px;background:#48484a}
-.grp{font-size:13px;color:var(--dim);padding:16px 2px 6px;font-weight:500}
+.grp{font-size:12px;color:var(--dim);padding:16px 2px 6px;font-weight:600;letter-spacing:.4px;text-transform:none}
 .pick{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 2px;
   border-top:.5px solid var(--sep);font-size:17px}
 .pick:active{background:rgba(255,255,255,.06)}
+
+/* 设置菜单行（左侧彩色图标砖） */
+.mrow{display:flex;align-items:center;gap:13px;padding:11px 2px;border-top:.5px solid var(--sep)}
+.card > .mrow:first-child{border-top:none}
+.mi{width:36px;height:36px;border-radius:9px;display:grid;place-items:center;flex:none}
+.mi svg{width:19px;height:19px;fill:none;stroke:#fff;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.mr-txt{flex:1;min-width:0}
+.mr-txt b{display:block;font-size:17px;font-weight:500;letter-spacing:-.2px}
+.mr-txt span{display:block;font-size:13px;color:var(--dim);margin-top:2px}
+
+.si{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* 卡片标题带图标 */
+.ch{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.ch svg{width:17px;height:17px;fill:none;stroke:var(--acc);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ch h3{margin:0;font-size:17px;font-weight:600}
 .card > .pick:first-child{border-top:none}
 .card > .grp:first-child{padding-top:2px}
 
@@ -250,6 +266,13 @@ input.num:focus{outline:none;box-shadow:0 0 0 2px rgba(194,44,44,.5)}
     <circle cx="12" cy="12" r="3"/>
     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6 1.65 1.65 0 0 0 10 3.09V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
   </symbol>
+  <symbol id="i-timer" viewBox="0 0 24 24"><circle cx="12" cy="13.5" r="7.5"/><path d="M12 10v3.5l2.4 1.9M9.5 2h5M12 2v3.5"/></symbol>
+  <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 3c3.2 3.6 6 6.2 6 10a6 6 0 0 1-12 0c0-2 1-3.6 2.6-5.1.4 1.5 1.3 2.2 2.3 2.2 1.5 0 2.1-1.6 1.1-7.1z"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M5 20V11M12 20V4M19 20v-6"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M4.8 20c1.1-4.1 3.9-6.1 7.2-6.1S18.1 15.9 19.2 20"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M8.5 6h11M8.5 12h11M8.5 18h11"/><circle cx="4.2" cy="6" r="1"/><circle cx="4.2" cy="12" r="1"/><circle cx="4.2" cy="18" r="1"/></symbol>
+  <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="6.8" ry="2.9"/><path d="M5.2 6v12c0 1.6 3 2.9 6.8 2.9s6.8-1.3 6.8-2.9V6"/><path d="M5.2 12c0 1.6 3 2.9 6.8 2.9s6.8-1.3 6.8-2.9"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><path d="M12 11.2v5.4M12 7.6v.6"/></symbol>
   <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24"><path d="M4 12.5l5.2 5.2L20 6.6"/></symbol>
   <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
@@ -281,7 +304,7 @@ input.num:focus{outline:none;box-shadow:0 0 0 2px rgba(194,44,44,.5)}
 (function(){
 "use strict";
 
-var VER = "v3.2";
+var VER = "v3.3";
 var QUOTES = [
   "没人看见的训练最算数。",
   "身体会记住你今天做的事。",
@@ -949,7 +972,8 @@ function viewTrain(){
 
     if (last){
       s += '<div class="card"><div class="spread" style="margin-bottom:10px">' +
-        '<h3 style="margin:0">上次训练</h3><span class="dim" style="font-size:13px">' + last.date + '</span></div>';
+        '<div class="ch" style="margin:0"><svg><use href="#i-timer"></use></svg><h3>上次训练</h3></div>' +
+        '<span class="dim" style="font-size:13px">' + last.date + '</span></div>';
       var le = last.entries.slice(0, 4);
       for (var j=0;j<le.length;j++){
         s += '<div class="spread" style="padding:7px 0">' +
@@ -967,11 +991,11 @@ function viewTrain(){
     if (n){
       s += '<div class="card"><div class="spread" style="text-align:center">' +
         '<div style="flex:1"><div style="font-size:28px;font-weight:700;font-variant-numeric:tabular-nums">' + wk.count + '</div>' +
-        '<div class="dim" style="font-size:13px">本周训练</div></div>' +
+        '<div class="dim" style="font-size:13px;display:flex;align-items:center;justify-content:center;gap:4px"><svg class="si"><use href="#i-hist"></use></svg>本周训练</div></div>' +
         '<div style="flex:1"><div style="font-size:28px;font-weight:700;font-variant-numeric:tabular-nums">' + wk.volume + '</div>' +
-        '<div class="dim" style="font-size:13px">容量 kg</div></div>' +
+        '<div class="dim" style="font-size:13px;display:flex;align-items:center;justify-content:center;gap:4px"><svg class="si"><use href="#i-chart"></use></svg>容量 kg</div></div>' +
         '<div style="flex:1"><div style="font-size:28px;font-weight:700;font-variant-numeric:tabular-nums">' + wk.kcal + '</div>' +
-        '<div class="dim" style="font-size:13px">消耗 千卡</div></div>' +
+        '<div class="dim" style="font-size:13px;display:flex;align-items:center;justify-content:center;gap:4px"><svg class="si"><use href="#i-flame"></use></svg>消耗 千卡</div></div>' +
         '</div></div>';
     }
     return s;
@@ -1237,11 +1261,11 @@ function viewHist(){
   }
   s += '<div class="card"><div class="spread" style="text-align:center">' +
     '<div style="flex:1"><div style="font-size:28px;font-weight:700;font-variant-numeric:tabular-nums">' + wk.count + '</div>' +
-    '<div class="dim" style="font-size:13px">本周训练</div></div>' +
+    '<div class="dim" style="font-size:13px;display:flex;align-items:center;justify-content:center;gap:4px"><svg class="si"><use href="#i-hist"></use></svg>本周训练</div></div>' +
     '<div style="flex:1"><div style="font-size:28px;font-weight:700;font-variant-numeric:tabular-nums">' + ws.length + '</div>' +
-    '<div class="dim" style="font-size:13px">累计训练</div></div>' +
+    '<div class="dim" style="font-size:13px;display:flex;align-items:center;justify-content:center;gap:4px"><svg class="si"><use href="#i-list"></use></svg>累计训练</div></div>' +
     '<div style="flex:1"><div style="font-size:28px;font-weight:700;font-variant-numeric:tabular-nums">' + wk.kcal + '</div>' +
-    '<div class="dim" style="font-size:13px">本周消耗</div></div>' +
+    '<div class="dim" style="font-size:13px;display:flex;align-items:center;justify-content:center;gap:4px"><svg class="si"><use href="#i-flame"></use></svg>本周消耗</div></div>' +
     '</div></div>';
 
   var stW = weekStats();
@@ -1387,12 +1411,12 @@ function balanceOf(dateStr){
   return { intake: st.intake, base: base, workout: st.workout, total: total, net: st.intake - total };
 }
 function balanceCard(){
-  if (!bodyWeight()) return '<div class="card"><h3>今日热量收支</h3><div class="dim">先在「设置 → 身体数据」里填体重，才能估算消耗。</div></div>';
+  if (!bodyWeight()) return '<div class="card"><div class="ch"><svg style="stroke:#ff9f0a"><use href="#i-flame"></use></svg><h3>今日热量收支</h3></div><div class="dim">先在「设置 → 身体数据」里填体重，才能估算消耗。</div></div>';
   var b = balanceOf(today());
   var pct = b.total ? Math.min(100, Math.round(b.intake / b.total * 100)) : 0;
   var deficit = -b.net;
   var color = b.net <= 0 ? "#30d158" : "#ff453a";
-  return '<div class="card"><h3>今日热量收支</h3>' +
+  return '<div class="card"><div class="ch"><svg style="stroke:#ff9f0a"><use href="#i-flame"></use></svg><h3>今日热量收支</h3></div>' +
     '<div class="spread" style="margin-bottom:12px">' +
       '<div><div class="dim" style="font-size:12px">摄入</div><div style="font-size:22px;font-weight:700">' + b.intake + '</div></div>' +
       '<div style="text-align:right"><div class="dim" style="font-size:12px">消耗（估）</div><div style="font-size:22px;font-weight:700">' + b.total + '</div></div>' +
@@ -1412,7 +1436,7 @@ function calendarCard(){
   var days = new Date(y, m + 1, 0).getDate();
   var tstr = today();
   var s = '<div class="card"><div class="spread" style="margin-bottom:12px">' +
-    '<h3 style="margin:0">' + (m + 1) + ' 月</h3>' +
+    '<div class="ch" style="margin:0"><svg style="stroke:#0a84ff"><use href="#i-hist"></use></svg><h3>' + (m + 1) + ' 月</h3></div>' +
     '<span class="dim" style="font-size:12px">绿缺口 · 红盈余</span></div><div class="cal">';
   var wd = ["一","二","三","四","五","六","日"], i;
   for (i=0;i<7;i++) s += '<div class="calh">' + wd[i] + '</div>';
@@ -1434,7 +1458,7 @@ function calendarCard(){
 function nutrientCard(meals){
   var ms = macroSums(meals), mt = macroTargets();
   var st = dayStats(today());
-  var s = '<div class="card"><h3>营养素</h3>';
+  var s = '<div class="card"><div class="ch"><svg style="stroke:#30d158"><use href="#i-chart"></use></svg><h3>营养素</h3></div>';
   if (mt){
     var mrows = [["蛋白质", ms.p, mt.p, "pf"], ["碳水", ms.c, mt.c, "cf"], ["脂肪", ms.f, mt.f, "ff"]];
     for (var i=0;i<mrows.length;i++){
@@ -1646,11 +1670,12 @@ function subHead(title, backAct, backLabel){
     '<button class="btn sm ghost" data-act="' + (backAct || "set:back") + '" style="padding:0 12px 0 0;min-height:36px;font-size:15px">‹ ' + (backLabel || "设置") + '</button></div>' +
     '<h1 class="pt" style="margin-top:6px">' + title + '</h1>';
 }
-function menuRow(title, sub, page){
-  return '<div class="pick" data-act="set:open" data-page="' + page + '" style="padding:15px 2px">' +
-    '<div><div style="font-size:17px">' + title + '</div>' +
-    (sub ? '<div class="dim" style="font-size:13px;margin-top:3px">' + sub + '</div>' : '') + '</div>' +
-    '<svg class="ti" style="width:16px;height:16px;stroke:var(--dim2)"><use href="#i-chev"></use></svg></div>';
+function menuRow(title, sub, page, icon, color){
+  return '<div class="mrow" data-act="set:open" data-page="' + page + '">' +
+    '<div class="mi" style="background:' + (color || "#3a3a3c") + '">' +
+    '<svg><use href="#' + (icon || "i-gear") + '"></use></svg></div>' +
+    '<div class="mr-txt"><b>' + title + '</b>' + (sub ? '<span>' + sub + '</span>' : '') + '</div>' +
+    '<svg class="ti" style="width:15px;height:15px;stroke:var(--dim2);flex:none"><use href="#i-chev"></use></svg></div>';
 }
 function restCard(){
   return '<div class="card">' +
@@ -1666,7 +1691,7 @@ function restCard(){
     '</div>';
 }
 function exCard(){
-  var s = '<div class="card"><div class="spread" style="margin-bottom:10px"><h3 style="margin:0">动作库</h3>' +
+  var s = '<div class="card"><div class="spread" style="margin-bottom:6px"><div class="ch" style="margin:0"><svg style="stroke:#30d158"><use href="#i-list"></use></svg><h3>动作库</h3></div>' +
     '<button class="btn sm" data-act="ex:new">+ 新增</button></div>';
   for (var g=0;g<GROUPS_ALL.length;g++){
     var list = db.ex.filter(function(x){ return x.group === GROUPS_ALL[g]; });
@@ -1713,13 +1738,13 @@ function viewSet(){
   return pageHead("设置", "燃 " + VER) +
     '<div class="card" style="padding:2px 16px">' +
     menuRow("身体数据", (db.profile.height || "—") + " cm · " + (db.profile.weight || "—") + " kg" +
-      (bf ? " · 体脂 " + bf + "%" : ""), "profile") +
-    menuRow("组间休息", (db.settings.auto ? "自动" : "手动") + " · " + db.settings.rest + " 秒 · 步进 " + db.settings.step + "kg", "rest") +
-    menuRow("我的动作", db.ex.length + " 个", "ex") +
+      (bf ? " · 体脂 " + bf + "%" : ""), "profile", "i-user", "#0a84ff") +
+    menuRow("组间休息", (db.settings.auto ? "自动" : "手动") + " · " + db.settings.rest + " 秒 · 步进 " + db.settings.step + "kg", "rest", "i-timer", "#ff9f0a") +
+    menuRow("我的动作", db.ex.length + " 个", "ex", "i-list", "#30d158") +
     '</div>' +
     '<div class="card" style="padding:2px 16px">' +
-    menuRow("数据与备份", "导出 / 导入 / 清空", "data") +
-    menuRow("关于与免责", "版本 " + VER, "about") +
+    menuRow("数据与备份", "导出 / 导入 / 清空", "data", "i-db", "#bf5af2") +
+    menuRow("关于与免责", "版本 " + VER, "about", "i-info", "#636366") +
     '</div>';
 }
 
