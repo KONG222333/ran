@@ -1,5 +1,5 @@
 /* 燃 · 离线缓存 */
-const CACHE = "ran-v26";
+const CACHE = "ran-v27";
 const ASSETS = [
   "./",
   "./index.html",
