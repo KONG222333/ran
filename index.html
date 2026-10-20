@@ -30,7 +30,8 @@ input,select,textarea{font-family:inherit;font-size:inherit}
   gap:12px;padding:calc(env(safe-area-inset-top) + 4px) 16px 4px;min-height:44px;
   background:rgba(0,0,0,.8);-webkit-backdrop-filter:saturate(180%) blur(20px);
   backdrop-filter:saturate(180%) blur(20px);border-bottom:.5px solid var(--sep)}
-.brand{display:flex;align-items:baseline;gap:7px;font-weight:800;font-size:20px;letter-spacing:1px}
+.brand{display:flex;align-items:center;gap:8px}
+.brand img{height:26px;width:auto;display:block}
 .brand b{color:var(--acc)}
 .brand span{font-size:9px;letter-spacing:2.5px;color:var(--dim);font-weight:600}
 
@@ -232,7 +233,7 @@ input.num:focus{outline:none;box-shadow:0 0 0 2px rgba(194,44,44,.5)}
   <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
 </svg>
 <header id="hdr">
-  <div class="brand"><b>燃</b><span>FUEL</span></div>
+  <div class="brand"><img src="logo-header.png" alt="燃"><span>FUEL</span></div>
   <div id="hdrRight"></div>
 </header>
 <main id="main"></main>
@@ -257,7 +258,7 @@ input.num:focus{outline:none;box-shadow:0 0 0 2px rgba(194,44,44,.5)}
 (function(){
 "use strict";
 
-var VER = "v2.3";
+var VER = "v2.4";
 var QUOTES = [
   "没人看见的训练最算数。",
   "身体会记住你今天做的事。",
