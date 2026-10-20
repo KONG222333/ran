@@ -20,8 +20,8 @@
   --r:12px; --tabh:50px; --safe-b:env(safe-area-inset-bottom);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html{height:100%;background:var(--bg)}
-body{margin:0;padding:0;height:100vh;height:100dvh;display:flex;flex-direction:column;
+html{height:100%;background:var(--card)}
+body{margin:0;padding:0;height:100%;display:flex;flex-direction:column;
   overflow:hidden;background:var(--bg);color:var(--txt);
   font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Helvetica Neue","Microsoft YaHei",sans-serif;
   font-size:17px;line-height:1.4;overscroll-behavior:none;-webkit-font-smoothing:antialiased}
@@ -129,7 +129,7 @@ select.search{appearance:none;-webkit-appearance:none}
 
 /* 底部导航 */
 #tabs{position:relative;z-index:19;display:flex;flex:none;
-  padding-bottom:var(--safe-b);background:rgba(28,28,30,.98);
+  padding-bottom:var(--safe-b);background:var(--card);
   border-top:.5px solid var(--sep)}
 #tabs button{flex:1;height:var(--tabh);display:flex;flex-direction:column;align-items:center;
   justify-content:center;gap:3px;font-size:10px;color:var(--dim);font-weight:500}
@@ -169,6 +169,10 @@ input.num:focus{outline:none;box-shadow:0 0 0 2px rgba(194,44,44,.5)}
   -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);
   box-shadow:0 8px 24px rgba(0,0,0,.5)}
 #toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* 兜底：把导航栏下方的安全区颜色补齐，避免露出黑边 */
+#botfill{position:fixed;left:0;right:0;bottom:0;height:calc(env(safe-area-inset-bottom) + 64px);
+  background:var(--card);z-index:18;pointer-events:none}
 
 /* 长按确认按钮 */
 .hold{position:relative;overflow:hidden;user-select:none;-webkit-user-select:none;
@@ -250,6 +254,7 @@ input.num:focus{outline:none;box-shadow:0 0 0 2px rgba(194,44,44,.5)}
   <button data-act="tab" data-tab="set"><svg class="ti"><use href="#i-gear"></use></svg>设置</button>
 </nav>
 <div id="mask"><div id="sheet"></div></div>
+<div id="botfill"></div>
 <div id="celebrate"><canvas id="cvs"></canvas><div class="cel-card" id="celCard"></div></div>
 <div id="egg"><div class="egg-card" id="eggCard"></div></div>
 <div id="toast"></div>
@@ -257,7 +262,7 @@ input.num:focus{outline:none;box-shadow:0 0 0 2px rgba(194,44,44,.5)}
 (function(){
 "use strict";
 
-var VER = "v1.9";
+var VER = "v2.0";
 var QUOTES = [
   "没人看见的训练最算数。",
   "身体会记住你今天做的事。",
@@ -2147,7 +2152,11 @@ if (typeof navigator !== "undefined" && "serviceWorker" in navigator &&
     typeof location !== "undefined" &&
     (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1")) {
   window.addEventListener("load", function(){
-    try { navigator.serviceWorker.register("sw.js").catch(function(){}); } catch(e){}
+    try {
+      navigator.serviceWorker.register("sw.js").then(function(reg){
+        try { reg.update(); } catch(e){}       /* 每次启动都检查一次更新，避免卡在旧缓存 */
+      }).catch(function(){});
+    } catch(e){}
   });
 }
 
