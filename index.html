@@ -56,6 +56,19 @@ input,select,textarea{font-family:inherit;font-size:inherit}
 .btn.primary{background:var(--acc);color:#fff}
 .btn.block{display:flex;width:100%}
 .btn.sm{min-height:32px;padding:0 14px;font-size:15px;border-radius:16px;font-weight:600}
+.btn.sm.warm-on{background:rgba(255,159,10,.2);color:#ffb340}
+
+/* 热量日历 */
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.calh{font-size:11px;color:var(--dim);text-align:center;padding-bottom:2px}
+.cald{border-radius:8px;background:var(--card2);min-height:44px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:1px;font-size:11px;color:var(--dim)}
+.cald b{font-size:12px;font-weight:600;color:#fff}
+.cald span{font-size:9px;line-height:1}
+.calg{background:rgba(48,209,88,.13)} .calg span{color:#6fdc8c}
+.calr{background:rgba(255,69,58,.13)} .calr span{color:#ff8b84}
+.caltoday{box-shadow:inset 0 0 0 1.5px var(--acc)}
+.calfuture{opacity:.32}
 .btn.ghost{background:transparent;color:var(--acc)}
 .btn.danger{background:transparent;color:#ff453a}
 
@@ -258,7 +271,7 @@ input.num:focus{outline:none;box-shadow:0 0 0 2px rgba(194,44,44,.5)}
 (function(){
 "use strict";
 
-var VER = "v2.4";
+var VER = "v3.0";
 var QUOTES = [
   "没人看见的训练最算数。",
   "身体会记住你今天做的事。",
@@ -284,12 +297,12 @@ var GROUPS_ALL = GROUPS.concat(CARDIO_GROUPS, ["其他"]);
 var DEF = [
   /* 胸 */
   ["胸","哑铃卧推","free"],["胸","上斜哑铃卧推","free"],["胸","哑铃飞鸟","free"],["胸","器械推胸","free"],
-  ["胸","杠铃卧推","free"],["胸","上斜杠铃卧推","free"],["胸","绳索夹胸","free"],["胸","俯卧撑","free"],
-  ["胸","双杠臂屈伸","free"],["胸","哑铃仰卧上拉","free"],["胸","辅助双杠臂屈伸","assist"],
+  ["胸","杠铃卧推","free"],["胸","上斜杠铃卧推","free"],["胸","绳索夹胸","free"],["胸","俯卧撑","free",0,0,1],
+  ["胸","双杠臂屈伸","free",0,0,1],["胸","哑铃仰卧上拉","free"],["胸","辅助双杠臂屈伸","assist"],
   /* 背 */
   ["背","哑铃单臂划船","free"],["背","高位下拉","free"],["背","坐姿划船","free"],
-  ["背","杠铃划船","free"],["背","T 杠划船","free"],["背","直臂下压","free"],["背","山羊挺身","free"],
-  ["背","辅助引体向上","assist"],["背","引体向上","free"],
+  ["背","杠铃划船","free"],["背","T 杠划船","free"],["背","直臂下压","free"],["背","山羊挺身","free",0,0,1],
+  ["背","辅助引体向上","assist"],["背","引体向上","free",0,0,1],
   /* 腿 */
   ["腿","哑铃高脚杯深蹲","free"],["腿","哑铃箭步蹲","free"],["腿","腿举","free"],["腿","罗马尼亚硬拉","free"],
   ["腿","杠铃深蹲","free"],["腿","保加利亚分腿蹲","free"],["腿","腿弯举","free"],["腿","腿屈伸","free"],
@@ -301,8 +314,8 @@ var DEF = [
   ["手臂","哑铃弯举","free"],["手臂","锤式弯举","free"],["手臂","绳索下压","free"],
   ["手臂","杠铃弯举","free"],["手臂","窄距卧推","free"],["手臂","颈后臂屈伸","free"],["手臂","腕弯举","free"],
   /* 核心 */
-  ["核心","负重卷腹","free"],["核心","悬垂举腿","free"],["核心","俄罗斯转体","free"],
-  ["核心","卷腹","free"],["核心","侧卷腹","free"],
+  ["核心","负重卷腹","free"],["核心","悬垂举腿","free",0,0,1],["核心","俄罗斯转体","free",0,0,1],
+  ["核心","卷腹","free",0,0,1],["核心","侧卷腹","free",0,0,1],
   /* 有氧（室内） */
   ["有氧","跑步机","cardio",8.0,1],["有氧","爬楼机","cardio",8.8,1],["有氧","椭圆机","cardio",5.0,0],
   ["有氧","动感单车","cardio",8.5,0],["有氧","划船机","cardio",7.0,0],["有氧","跳绳","cardio",12.3,0],
@@ -316,7 +329,7 @@ var DEF = [
 var db, ui = { tab:"train", pick:false, foodPick:false, foodForm:false, foodQ:"", foodCat:"",
   nfMode:"serving", nfDraft:null, edit:null, open:null, toastT:null,
   exForm:false, exKind:"strength", exCat:"胸", exAssist:false, exMet:7, exName:"", exInc:false, exQ:"",
-  onboard:false, obSex:"m", eggT:null };
+  onboard:false, obSex:"m", eggT:null, setPage:"", warm:false };
 
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 
@@ -325,11 +338,11 @@ function defaults(){
     ex: DEF.map(function(x){
       var cardio = CARDIO_GROUPS.indexOf(x[0]) >= 0;
       return { id:uid(), name:x[1], group:x[0], type:x[2],
-        kind: cardio ? "cardio" : "strength", met: x[3] || 0, inc: !!x[4] };
+        kind: cardio ? "cardio" : "strength", met: x[3] || 0, inc: !!x[4], bw: !!x[5] };
     }),
     workouts: [],
     active: null,
-    settings: { rest: 90, auto: true },
+    settings: { rest: 90, auto: true, step: 2.5 },
     profile: { sex:"m", age:20, height:170, weight:65, bmrManual:0, bfManual:0, target:0 },
     foods: DEF_FOODS.map(function(x){
       return { id:uid(), name:x[0], unit:x[1], kcal:x[2], cat:x[3], p:x[4], c:x[5], f:x[6] };
@@ -388,12 +401,25 @@ var DEF_FOODS = [
   ["啤酒","330 ml",140,"放纵",1,11,0],["可乐","330 ml",140,"放纵",0,35,0],
   ["雪碧","330 ml",140,"放纵",0,36,0]
 ];
+/* 每「1 份」的维生素估算（维C mg / 维A µg / 维D µg）—— 近似值，仅供参考 */
+var VITS = {
+  "红薯":[2.4,709,0], "玉米":[5,9,0], "蛋炒饭":[0,60,1], "煎饼果子":[0,20,1],
+  "鸡蛋":[0,80,1.1], "三文鱼":[0,40,11], "鸡腿":[0,10,0.1], "鸡翅":[0,8,0.1],
+  "猪肉":[0,2,0.4], "鸭腿":[0,20,0.2], "火腿肠":[0,0,0.2], "培根":[0,0,0.2],
+  "香蕉":[9,3,0], "苹果":[5,3,0], "西兰花":[60,31,0], "番茄":[14,42,0],
+  "黄瓜":[3,8,0], "生菜":[6,150,0], "菠菜":[32,243,0], "胡萝卜":[8,835,0],
+  "橙子":[53,11,0], "西瓜":[8,28,0], "葡萄":[4,3,0], "草莓":[47,1,0],
+  "梨":[4,1,0], "猕猴桃":[62,4,0], "牛奶":[1,26,1.0], "酸奶":[1,20,0.5],
+  "奶酪":[0,60,0.3], "拿铁":[0,20,0.4], "海苔":[0,40,0], "披萨":[2,50,0.2],
+  "汉堡":[2,40,0.2], "蛋糕":[0,20,0.3], "冰淇淋":[0,30,0.2]
+};
 
 function normalize(d){
   if (!d || typeof d !== "object") d = defaults();
   if (!d.settings || typeof d.settings !== "object") d.settings = { rest:90, auto:true };
   if (typeof d.settings.rest !== "number") d.settings.rest = 90;
   if (typeof d.settings.auto !== "boolean") d.settings.auto = true;
+  if (typeof d.settings.step !== "number" || d.settings.step <= 0) d.settings.step = 2.5;
   if (!Array.isArray(d.ex)) d.ex = [];
   if (!Array.isArray(d.workouts)) d.workouts = [];
   if (!Array.isArray(d.meals)) d.meals = [];
@@ -409,6 +435,11 @@ function normalize(d){
       var inc = false;
       for (var ii=0;ii<DEF.length;ii++) if (DEF[ii][1] === x.name) inc = !!DEF[ii][4];
       x.inc = inc;
+    }
+    if (x.bw === undefined){
+      var bw = false;
+      for (var jj=0;jj<DEF.length;jj++) if (DEF[jj][1] === x.name) bw = !!DEF[jj][5];
+      x.bw = bw;
     }
   });
   /* 老版本升级：补上后来新增的动作（有氧、户外、更多器械），同名跳过 */
@@ -426,12 +457,15 @@ function normalize(d){
   }
   d.workouts = (d.workouts || []).filter(function(w){ return w && typeof w === "object"; });
   d.workouts.forEach(function(w){
+    if (typeof w.name !== "string") w.name = "";
     w.entries = (w.entries || []).filter(function(e){ return e && typeof e === "object"; });
     w.entries.forEach(function(e){
+      if (e.bw === undefined) e.bw = false;
       e.sets = (e.sets || []).filter(function(s){ return s && typeof s === "object"; });
       e.sets.forEach(function(s){
         s.w = Number(s.w) || 0;
         s.r = Number(s.r) || 1;
+        if (s.warm === undefined) s.warm = false;
       });
     });
   });
@@ -461,6 +495,10 @@ function normalize(d){
       f.cat = c;
     }
     if (f.cat === "零食饮料") f.cat = "零食";
+    if (f.vc === undefined){
+      var vv = VITS[f.name] || [0,0,0];
+      f.vc = vv[0]; f.va = vv[1]; f.vd = vv[2];
+    }
     if (f.p === undefined){
       for (var k=0;k<DEF_FOODS.length;k++) if (DEF_FOODS[k][0] === f.name){
         f.p = DEF_FOODS[k][4]; f.c = DEF_FOODS[k][5]; f.f = DEF_FOODS[k][6]; break;
@@ -472,6 +510,7 @@ function normalize(d){
   d.meals = d.meals.filter(function(m){ return m && typeof m === "object"; });
   d.meals.forEach(function(m){
     if (m.p === undefined){ m.p = 0; m.c = 0; m.f = 0; }
+    if (m.vc === undefined){ m.vc = 0; m.va = 0; m.vd = 0; }
     if (typeof m.amount !== "number" || m.amount <= 0) m.amount = 1;
     if (typeof m.per !== "number") m.per = 0;
     if (!m.date) m.date = today();
@@ -565,7 +604,10 @@ function e1rm(w, r){ return (r > 0) ? w * (1 + r / 30) : 0; }   /* Epley 公式 
 function best1rm(sets){
   var m = 0;
   if (!sets) return 0;
-  for (var i=0;i<sets.length;i++) m = Math.max(m, e1rm(Number(sets[i].w) || 0, Number(sets[i].r) || 0));
+  for (var i=0;i<sets.length;i++){
+    if (sets[i].warm) continue;
+    m = Math.max(m, e1rm(Number(sets[i].w) || 0, Number(sets[i].r) || 0));
+  }
   return m;
 }
 function lastEntryOf(exId){
@@ -637,7 +679,7 @@ function copyLastWorkout(){
     id:uid(), date:today(), start:Date.now(),
     entries: w.entries.map(function(e){
       return { exId:e.exId, name:e.name, type:e.type, group:groupOf(e),
-        kind:e.kind || "strength", met:e.met || 0, sets:[] };
+        kind:e.kind || "strength", met:e.met || 0, bw:!!e.bw, sets:[] };
     })
   };
   save(); render();
@@ -663,6 +705,7 @@ function finishWorkout(){
     return;
   }
   a.end = Date.now();
+  if (typeof a.name !== "string") a.name = "";
   db.workouts.push(a);
   db.active = null;
   stopRest(); save(); render();
@@ -675,12 +718,12 @@ function addEntry(exId){
   }
   var e = exById(exId); if (!e) return;
   a.entries.push({ exId:e.id, name:e.name, type:e.type, group:e.group,
-    kind:e.kind || "strength", met:e.met || 0, inc:!!e.inc, sets:[] });
+    kind:e.kind || "strength", met:e.met || 0, inc:!!e.inc, bw:!!e.bw, sets:[] });
   save(); ui.pick=false; render();
 }
-function addSet(ei, w, r){
+function addSet(ei, w, r, warm){
   var a = db.active; if (!a || !a.entries[ei]) return;
-  a.entries[ei].sets.push({ w: Math.round(w*100)/100, r: Math.max(1, Math.round(r)) });
+  a.entries[ei].sets.push({ w: Math.round(w*100)/100, r: Math.max(1, Math.round(r)), warm: !!warm });
   save();
   if (db.settings.auto) startRest(db.settings.rest);
   render();
@@ -791,7 +834,7 @@ function prList(){
     for (j=0;j<w.entries.length;j++){
       var e = w.entries[j];
       if (!e.sets || !e.sets.length) continue;
-      if (e.type === "assist") continue;   /* 辅助动作的「重量」不是负荷，不参与 1RM 排名 */
+      if (e.type === "assist" || e.bw) continue;   /* 辅助动作的「重量」不是负荷，不参与 1RM 排名 */
       var key = e.exId || e.name;
       var e1 = best1rm(e.sets);
       var top = e.sets[0];
@@ -957,8 +1000,9 @@ function viewTrain(){
 
 function entryCard(where, ei, e){
   if (e.kind === "cardio") return cardioCard(where, ei, e);
+  if (e.bw) return bwCard(where, ei, e);
   var unit = unitOf(e.type), lab = labelOf(e.type);
-  var step = (e.type === "assist") ? 5 : 2.5;
+  var step = (e.type === "assist") ? 5 : (Number(db.settings.step) || 2.5);
   var ls = lastSets(e.exId);
   var le = lastEntryOf(e.exId);
   var sug = suggestOf(e.exId, step, e.type === "assist");
@@ -993,7 +1037,8 @@ function entryCard(where, ei, e){
         '<button class="iconbtn" data-act="set:save" data-w="' + where + '" data-e="' + ei + '" data-s="' + k + '">✓</button>' +
         '</div>';
     } else {
-      s += '<div class="set"><span class="idx">第' + (k+1) + '组</span>' +
+      s += '<div class="set"' + (st.warm ? ' style="opacity:.62"' : '') + '>' +
+        '<span class="idx">' + (st.warm ? '热身' : '第' + (k+1) + '组') + '</span>' +
         '<span class="val">' + fmtW(st.w) + '<i>' + unit + '</i> × ' + st.r + '<i>次</i></span>' +
         '<button class="iconbtn" data-act="set:edit" data-w="' + where + '" data-e="' + ei + '" data-s="' + k + '">改</button>' +
         '<button class="iconbtn" data-act="set:del" data-w="' + where + '" data-e="' + ei + '" data-s="' + k + '">✕</button>' +
@@ -1003,18 +1048,59 @@ function entryCard(where, ei, e){
   s += '</div>';
   if (where === "active"){
     s += '<div class="addset" data-ei="' + ei + '">' +
-      '<span class="lbl">记录一组 · ' + lab + '</span>' +
-      '<div class="stepper" data-step="' + (e.type === "assist" ? 5 : 2.5) + '">' +
+      '<span class="lbl">记录一组 · ' + lab + (ui.warm ? '（热身）' : '') + '</span>' +
+      '<div class="stepper" data-step="' + step + '">' +
         '<button data-act="st:down" data-k="w">−</button>' +
-        '<div class="num" data-v="w">' + fmtW(pw) + '<span class="unit">' + unit + '</span></div>' +
+        '<div class="num" data-v="w" data-act="num:edit" data-k="w">' + fmtW(pw) + '<span class="unit">' + unit + '</span></div>' +
         '<button data-act="st:up" data-k="w">+</button>' +
       '</div>' +
       '<div class="stepper" data-step="1">' +
         '<button data-act="st:down" data-k="r">−</button>' +
-        '<div class="num" data-v="r">' + pr + '<span class="unit">次</span></div>' +
+        '<div class="num" data-v="r" data-act="num:edit" data-k="r">' + pr + '<span class="unit">次</span></div>' +
         '<button data-act="st:up" data-k="r">+</button>' +
       '</div>' +
+      '<button class="btn sm ' + (ui.warm ? 'warm-on' : '') + '" data-act="warm:toggle"' +
+        (ui.warm ? '' : ' style="background:rgba(120,120,128,.2)"') + '>热身</button>' +
       '<button class="btn sm primary" data-act="set:add" data-e="' + ei + '">记录</button>' +
+      '</div>';
+  }
+  s += '</div>';
+  return s;
+}
+
+/* 自重动作：只记次数 */
+function bwCard(where, ei, e){
+  var kc = kcalOf(e);
+  var le = lastEntryOf(e.exId);
+  var pr = 10, tot = 0, i;
+  if (e.sets.length) pr = e.sets[e.sets.length-1].r;
+  else if (le && le.sets && le.sets.length) pr = le.sets[le.sets.length-1].r;
+  for (i=0;i<e.sets.length;i++) tot += e.sets[i].r;
+
+  var s = '<div class="entry"><div class="hd"><b>' + esc(e.name) + '</b>' +
+    '<span class="row" style="gap:6px"><span class="chip" style="background:rgba(10,132,255,.16);color:#7ab8ff">自重</span>' +
+    (kc ? '<span class="chip kcal">≈ ' + kc + ' 千卡</span>' : '') +
+    (where === "active" ? '<button class="iconbtn" data-act="ex:remove" data-e="' + ei + '">✕</button>' : '') +
+    '</span></div>' +
+    '<div class="hint">' + (tot ? '共 ' + tot + ' 次' : '只记次数，不记重量') + '</div>' +
+    '<div class="sets">';
+  if (!e.sets.length) s += '<div class="dim" style="padding:4px 2px 8px">还没有记录，下面记第一组</div>';
+  for (var k=0;k<e.sets.length;k++){
+    var st = e.sets[k];
+    s += '<div class="set"><span class="idx">第' + (k+1) + '组</span>' +
+      '<span class="val">' + st.r + '<i>次</i></span>' +
+      '<button class="iconbtn" data-act="set:del" data-w="' + where + '" data-e="' + ei + '" data-s="' + k + '">✕</button></div>';
+  }
+  s += '</div>';
+  if (where === "active"){
+    s += '<div class="addset" data-ei="' + ei + '">' +
+      '<span class="lbl">记录一组 · 次数</span>' +
+      '<div class="stepper" data-step="1">' +
+        '<button data-act="st:down" data-k="r">−</button>' +
+        '<div class="num" data-v="r" data-act="num:edit" data-k="r">' + pr + '<span class="unit">次</span></div>' +
+        '<button data-act="st:up" data-k="r">+</button>' +
+      '</div>' +
+      '<button class="btn sm primary" data-act="bw:add" data-e="' + ei + '">记录</button>' +
       '</div>';
   }
   s += '</div>';
@@ -1049,15 +1135,15 @@ function cardioCard(where, ei, e){
       '<span class="lbl">时长 / 距离</span>' +
       '<div class="stepper" data-step="5">' +
         '<button data-act="st:down" data-k="d">−</button>' +
-        '<div class="num" data-v="d">' + du + '<span class="unit">分钟</span></div>' +
+        '<div class="num" data-v="d" data-act="num:edit" data-k="d">' + du + '<span class="unit">分钟</span></div>' +
         '<button data-act="st:up" data-k="d">+</button></div>' +
       '<div class="stepper" data-step="0.5">' +
         '<button data-act="st:down" data-k="k">−</button>' +
-        '<div class="num" data-v="k">' + fmtW(km) + '<span class="unit">km</span></div>' +
+        '<div class="num" data-v="k" data-act="num:edit" data-k="k">' + fmtW(km) + '<span class="unit">km</span></div>' +
         '<button data-act="st:up" data-k="k">+</button></div>' +
       (e.inc ? '<div class="stepper" data-step="1">' +
         '<button data-act="st:down" data-k="g">−</button>' +
-        '<div class="num" data-v="g">' + gr + '<span class="unit">坡度%</span></div>' +
+        '<div class="num" data-v="g" data-act="num:edit" data-k="g">' + gr + '<span class="unit">坡度%</span></div>' +
         '<button data-act="st:up" data-k="g">+</button></div>' : '') +
       '<button class="btn sm primary" data-act="cardio:set" data-e="' + ei + '">' +
       (e.dur ? "更新" : "记录") + '</button>' +
@@ -1084,7 +1170,7 @@ function volume(w){
   var v = 0;
   for (var i=0;i<w.entries.length;i++){
     if (w.entries[i].type === "assist") continue;   /* 辅助重量不是负荷，不参与容量 */
-    for (var k=0;k<w.entries[i].sets.length;k++) v += w.entries[i].sets[k].w * w.entries[i].sets[k].r;
+    for (var k=0;k<w.entries[i].sets.length;k++){ if (w.entries[i].sets[k].warm) continue; v += w.entries[i].sets[k].w * w.entries[i].sets[k].r; }
   }
   return Math.round(v);
 }
@@ -1152,7 +1238,8 @@ function viewHist(){
     if (volume(w)) sumParts.push(volume(w) + ' kg');
     if (wk) sumParts.push('≈' + wk + ' 千卡');
     s += '<div class="card"><div class="spread" data-act="hist:open" data-id="' + w.id + '">' +
-      '<div><div style="font-weight:700">' + w.date + '</div>' +
+      '<div><div style="font-weight:700">' + esc(w.name || w.date) + '</div>' +
+      (w.name ? '<div class="dim" style="font-size:12px">' + w.date + '</div>' : '') +
       '<div class="dim">' + sumParts.join(' · ') + '</div></div>' +
       '<div class="dim">' + (open ? "收起" : "展开") + '</div></div>';
     if (open){
@@ -1190,7 +1277,9 @@ function viewHist(){
         }
         s += '</div>';
       }
-      s += '<button class="btn sm danger" data-act="hist:del" data-id="' + w.id + '">删除这次训练</button></div>';
+      s += '<div class="row" style="gap:10px;margin-top:12px;flex-wrap:wrap">' +
+        '<button class="btn sm" data-act="wo:rename" data-id="' + w.id + '">改名</button>' +
+        '<button class="btn sm danger" data-act="hist:del" data-id="' + w.id + '">删除这次训练</button></div></div>';
     }
     s += '</div>';
   }
@@ -1245,6 +1334,88 @@ function todayMeals(){
   var d = today();
   return db.meals.filter(function(m){ return m.date === d; });
 }
+/* ===== 每日收支 / 日历 / 维生素 ===== */
+function pad2(n){ return (n < 10 ? "0" : "") + n; }
+function dayStats(dateStr){
+  var kcal = 0, vc = 0, va = 0, vd = 0, i;
+  for (i=0;i<db.meals.length;i++){
+    var m = db.meals[i];
+    if (m.date !== dateStr) continue;
+    kcal += Math.round((Number(m.per) || 0) * m.amount);
+    vc += (Number(m.vc) || 0) * m.amount;
+    va += (Number(m.va) || 0) * m.amount;
+    vd += (Number(m.vd) || 0) * m.amount;
+  }
+  var burn = 0, cnt = 0;
+  for (i=0;i<db.workouts.length;i++){
+    if (db.workouts[i].date === dateStr){ burn += workoutKcal(db.workouts[i]); cnt++; }
+  }
+  return { intake: kcal, workout: burn, wcount: cnt, vc: vc, va: va, vd: vd };
+}
+function balanceOf(dateStr){
+  var st = dayStats(dateStr);
+  var base = Math.round(bmrOf() * 1.2);      /* 基础代谢 × 1.2 粗略活动量 */
+  var total = base + st.workout;
+  return { intake: st.intake, base: base, workout: st.workout, total: total, net: st.intake - total };
+}
+function balanceCard(){
+  var b = balanceOf(today());
+  var pct = b.total ? Math.min(100, Math.round(b.intake / b.total * 100)) : 0;
+  var deficit = -b.net;
+  var color = b.net <= 0 ? "#30d158" : "#ff453a";
+  return '<div class="card"><h3>今日热量收支</h3>' +
+    '<div class="spread" style="margin-bottom:12px">' +
+      '<div><div class="dim" style="font-size:12px">摄入</div><div style="font-size:22px;font-weight:700">' + b.intake + '</div></div>' +
+      '<div style="text-align:right"><div class="dim" style="font-size:12px">消耗（估）</div><div style="font-size:22px;font-weight:700">' + b.total + '</div></div>' +
+    '</div>' +
+    '<div class="bar ' + (b.net > 0 ? "over" : "") + '"><i style="width:' + pct + '%"></i></div>' +
+    '<div class="spread" style="margin-top:2px">' +
+      '<span class="dim" style="font-size:12px">基础代谢 ' + b.base + ' + 训练 ' + b.workout + '</span>' +
+      '<span style="font-weight:700;color:' + color + '">' + (b.net <= 0 ? "缺口 " + deficit : "盈余 " + b.net) + ' 千卡</span></div>' +
+    '<div class="dim" style="font-size:12px;margin-top:10px">消耗 = 基础代谢×1.2 + 训练消耗，属估算，不含走路等零碎活动。</div>' +
+    '</div>';
+}
+function calendarCard(){
+  var now = new Date();
+  var y = now.getFullYear(), m = now.getMonth();
+  var first = new Date(y, m, 1);
+  var pad = (first.getDay() + 6) % 7;
+  var days = new Date(y, m + 1, 0).getDate();
+  var tstr = today();
+  var s = '<div class="card"><div class="spread" style="margin-bottom:12px">' +
+    '<h3 style="margin:0">' + (m + 1) + ' 月</h3>' +
+    '<span class="dim" style="font-size:12px">绿缺口 · 红盈余</span></div><div class="cal">';
+  var wd = ["一","二","三","四","五","六","日"], i;
+  for (i=0;i<7;i++) s += '<div class="calh">' + wd[i] + '</div>';
+  for (i=0;i<pad;i++) s += '<div></div>';
+  for (var d=1;d<=days;d++){
+    var ds = y + "-" + pad2(m + 1) + "-" + pad2(d);
+    var b = balanceOf(ds);
+    var cls = "cald", txt = "";
+    if (b.intake > 0 || b.workout > 0){
+      cls += (b.net <= 0) ? " calg" : " calr";
+      txt = (b.net > 0 ? "+" : "") + b.net;
+    }
+    if (ds === tstr) cls += " caltoday";
+    if (ds > tstr) cls += " calfuture";
+    s += '<div class="' + cls + '"><b>' + d + '</b><span>' + txt + '</span></div>';
+  }
+  return s + '</div></div>';
+}
+function vitaminCard(){
+  var st = dayStats(today());
+  var rows = [["维C", Math.round(st.vc), 100, "mg"], ["维A", Math.round(st.va), 800, "µg"], ["维D", Math.round(st.vd*10)/10, 10, "µg"]];
+  var s = '<div class="card"><h3>维生素</h3>';
+  for (var i=0;i<rows.length;i++){
+    var r = rows[i], pct = r[2] ? Math.min(100, Math.round(r[1] / r[2] * 100)) : 0;
+    s += '<div class="mbar"><span class="ml">' + r[0] + '</span>' +
+      '<span class="mt"><i class="pf" style="width:' + pct + '%"></i></span>' +
+      '<span class="mn">' + r[1] + '/' + r[2] + '</span></div>';
+  }
+  s += '<div class="dim" style="font-size:12px;margin-top:4px">单位：' + rows[0][3] + '。数值为常见食物的粗略估算，仅供参考；缺不缺主要靠饮食结构，不靠这个数字。</div></div>';
+  return s;
+}
+
 function viewFood(){
   var meals = todayMeals(), total = 0, i;
   for (i=0;i<meals.length;i++) total += Math.round(meals[i].per * meals[i].amount);
@@ -1278,6 +1449,8 @@ function viewFood(){
     }
     s += '<div class="dim" style="font-size:12px;margin-top:4px">单位：克。蛋白按体重 ×1.6、脂肪 ×0.8 估算，碳水由总热量倒推。</div></div>';
   }
+
+  s += balanceCard() + vitaminCard() + calendarCard();
 
   s += '<div class="card"><div class="spread" style="margin-bottom:10px"><h3 style="margin:0">今天吃了什么</h3>' +
     '<button class="btn sm primary" data-act="meal:open">+ 添加</button></div>';
@@ -1362,7 +1535,8 @@ function filterSheet(q){
 function readFoodForm(){
   var v = function(id){ var el = document.getElementById(id); return el && el.value !== undefined ? String(el.value) : ""; };
   return { name:v("nfName"), cat:v("nfCat"), unit:v("nfUnit"), kcal:v("nfKcal"),
-    p:v("nfP"), c:v("nfC"), f:v("nfF"), grams:v("nfGrams"), eunit:v("nfEU") };
+    p:v("nfP"), c:v("nfC"), f:v("nfF"), grams:v("nfGrams"), eunit:v("nfEU"),
+    vc:v("nfVc"), va:v("nfVa"), vd:v("nfVd") };
 }
 function foodFormHTML(){
   var list = CATS.concat(["其他"]), opts = "", i;
@@ -1394,6 +1568,9 @@ function foodFormHTML(){
       '<div class="frow"><label>蛋白质（g / 100g）</label><input class="search" id="nfP" type="number" inputmode="decimal" placeholder="例：8.2" value="' + esc(val("p")) + '"></div>' +
       '<div class="frow"><label>碳水（g / 100g）</label><input class="search" id="nfC" type="number" inputmode="decimal" placeholder="例：60" value="' + esc(val("c")) + '"></div>' +
       '<div class="frow"><label>脂肪（g / 100g）</label><input class="search" id="nfF" type="number" inputmode="decimal" placeholder="例：5.1" value="' + esc(val("f")) + '"></div>' +
+      '<div class="frow"><label>维C（mg / 100g，可留空）</label><input class="search" id="nfVc" type="number" inputmode="decimal" placeholder="可留空" value="' + esc(val("vc")) + '"></div>' +
+      '<div class="frow"><label>维A（µg / 100g，可留空）</label><input class="search" id="nfVa" type="number" inputmode="decimal" placeholder="可留空" value="' + esc(val("va")) + '"></div>' +
+      '<div class="frow"><label>维D（µg / 100g，可留空）</label><input class="search" id="nfVd" type="number" inputmode="decimal" placeholder="可留空" value="' + esc(val("vd")) + '"></div>' +
       '<div class="frow"><label>一份吃多少克</label><input class="search" id="nfGrams" type="number" inputmode="numeric" placeholder="例：30" value="' + esc(val("grams")) + '"></div>' +
       '<div class="frow"><label>一份叫什么（可留空）</label><input class="search" id="nfUnit" type="text" placeholder="例：1 袋(30g)" value="' + esc(val("unit")) + '"></div>' +
       '<div class="dim" style="font-size:12px;line-height:1.6;margin-bottom:16px">照抄包装上「每 100g」那一列，再填一份吃多少克，其余自动换算。' +
@@ -1404,6 +1581,9 @@ function foodFormHTML(){
       '<div class="frow"><label>蛋白质（g / 份）</label><input class="search" id="nfP" type="number" inputmode="decimal" placeholder="可留空" value="' + esc(val("p")) + '"></div>' +
       '<div class="frow"><label>碳水（g / 份）</label><input class="search" id="nfC" type="number" inputmode="decimal" placeholder="可留空" value="' + esc(val("c")) + '"></div>' +
       '<div class="frow"><label>脂肪（g / 份）</label><input class="search" id="nfF" type="number" inputmode="decimal" placeholder="可留空" value="' + esc(val("f")) + '"></div>' +
+      '<div class="frow"><label>维C（mg / 份，可留空）</label><input class="search" id="nfVc" type="number" inputmode="decimal" placeholder="可留空" value="' + esc(val("vc")) + '"></div>' +
+      '<div class="frow"><label>维A（µg / 份，可留空）</label><input class="search" id="nfVa" type="number" inputmode="decimal" placeholder="可留空" value="' + esc(val("va")) + '"></div>' +
+      '<div class="frow"><label>维D（µg / 份，可留空）</label><input class="search" id="nfVd" type="number" inputmode="decimal" placeholder="可留空" value="' + esc(val("vd")) + '"></div>' +
       '<div class="dim" style="font-size:12px;line-height:1.6;margin-bottom:16px">有包装袋的食品，切到「按每 100g 填」更省事，直接照抄表格。</div>';
   }
   s += '<button class="btn primary block" data-act="foodForm:save" style="margin-bottom:20px">保存</button>';
@@ -1415,43 +1595,92 @@ function addMeal(foodId){
   for (i=0;i<db.foods.length;i++) if (db.foods[i].id === foodId) f = db.foods[i];
   if (!f) return;
   db.meals.push({ id:uid(), date:today(), foodId:f.id, name:f.name,
-    per:Number(f.kcal) || 0, p:Number(f.p) || 0, c:Number(f.c) || 0, f:Number(f.f) || 0, amount:1 });
+    per:Number(f.kcal) || 0, p:Number(f.p) || 0, c:Number(f.c) || 0, f:Number(f.f) || 0,
+    vc:Number(f.vc) || 0, va:Number(f.va) || 0, vd:Number(f.vd) || 0, amount:1 });
   ui.foodPick = false; save(); render(); toast("已加 " + f.name);
 }
 
-function viewSet(){
-  var s = pageHead("设置", "身体数据与偏好") + profileCard() + '<div class="card"><h3>组间休息</h3>' +
-    '<div class="spread" style="margin-bottom:14px"><span class="dim">自动开始休息</span>' +
+/* ===== 设置（二级菜单） ===== */
+function subHead(title){
+  return '<div style="margin:12px 16px 0">' +
+    '<button class="btn sm ghost" data-act="set:back" style="padding:0;min-height:28px;font-size:15px">‹ 设置</button></div>' +
+    '<h1 class="pt" style="margin-top:6px">' + title + '</h1>';
+}
+function menuRow(title, sub, page){
+  return '<div class="pick" data-act="set:open" data-page="' + page + '" style="padding:15px 2px">' +
+    '<div><div style="font-size:17px">' + title + '</div>' +
+    (sub ? '<div class="dim" style="font-size:13px;margin-top:3px">' + sub + '</div>' : '') + '</div>' +
+    '<svg class="ti" style="width:16px;height:16px;stroke:var(--dim2)"><use href="#i-chev"></use></svg></div>';
+}
+function restCard(){
+  return '<div class="card">' +
+    '<div class="spread" style="margin-bottom:18px"><span>自动开始休息</span>' +
     '<div class="switch ' + (db.settings.auto ? "on" : "") + '" data-act="set:auto"></div></div>' +
-    '<div class="spread"><span class="dim">休息时长（秒）</span>' +
-    '<input class="num" id="restIn" type="number" inputmode="numeric" step="15" min="5" value="' + db.settings.rest + '"></div>' +
-    '<div class="dim" style="margin-top:10px">关闭「自动」后，每组记录完不会自动计时，需要时在训练页手动点「开始休息」。</div>' +
+    '<div class="spread" style="margin-bottom:18px"><span>休息时长</span>' +
+    '<div class="row" style="gap:8px"><input class="num" id="restIn" type="number" inputmode="numeric" step="15" min="5" value="' + db.settings.rest + '"><span class="dim">秒</span></div></div>' +
+    '<div class="spread"><span>重量步进</span>' +
+    '<div class="row" style="gap:8px"><input class="num" id="stepIn" type="number" inputmode="decimal" step="0.5" min="0.5" value="' + db.settings.step + '"><span class="dim">kg</span></div></div>' +
+    '<div class="dim" style="font-size:12px;line-height:1.7;margin-top:16px">' +
+    '· 关闭「自动」后，每组记录完不会自动计时，需要时在训练页手动点「开始休息」。<br>' +
+    '· 重量步进是 ± 按钮每次加减的量。哑铃不是 2.5 的倍数（比如 2.4 / 6.8kg）时，改这里，或训练时直接点数字输入。</div>' +
     '</div>';
-
-  s += '<div class="card"><div class="spread" style="margin-bottom:10px"><h3 style="margin:0">我的动作</h3>' +
+}
+function exCard(){
+  var s = '<div class="card"><div class="spread" style="margin-bottom:10px"><h3 style="margin:0">动作库</h3>' +
     '<button class="btn sm" data-act="ex:new">+ 新增</button></div>';
   for (var g=0;g<GROUPS_ALL.length;g++){
     var list = db.ex.filter(function(x){ return x.group === GROUPS_ALL[g]; });
     if (!list.length) continue;
-    s += '<div class="grp">' + GROUPS_ALL[g] + '</div>';
+    s += '<div class="grp">' + GROUPS_ALL[g] + ' · ' + list.length + '</div>';
     for (var i=0;i<list.length;i++){
       s += '<div class="pick"><span>' + esc(list[i].name) +
         (list[i].type === "assist" ? ' <span class="chip">辅助</span>' : '') +
         (list[i].kind === "cardio" ? ' <span class="chip" style="background:rgba(48,209,88,.14);color:#7be08f">有氧</span>' : '') +
+        (list[i].bw ? ' <span class="chip" style="background:rgba(10,132,255,.16);color:#7ab8ff">自重</span>' : '') +
         '</span><button class="iconbtn" data-act="ex:del" data-id="' + list[i].id + '">✕</button></div>';
     }
   }
   s += '</div>';
-
-  s += '<div class="card"><h3>数据</h3>' +
-    '<div class="row" style="gap:10px;flex-wrap:wrap;margin-bottom:10px">' +
+  return s;
+}
+function dataCard(){
+  return '<div class="card"><div class="row" style="gap:10px;flex-wrap:wrap;margin-bottom:12px">' +
     '<button class="btn sm" data-act="data:export">导出备份</button>' +
     '<button class="btn sm" data-act="data:import">导入备份</button></div>' +
-    '<div class="dim">数据只存在这台手机里。换手机或清理浏览器前，先导出备份。</div>' +
-    '<button class="btn sm danger" data-act="data:clear" style="margin-top:12px">清空全部数据</button>' +
-    '<div class="dim" style="font-size:11px;margin-top:14px;text-align:center">燃 ' + VER + ' · 单文件版</div>' +
+    '<div class="dim" style="line-height:1.7">数据只存在这台手机里。换手机或清理浏览器前，先导出备份。</div>' +
+    '<button class="btn sm danger" data-act="data:clear" style="margin-top:16px">清空全部数据</button></div>';
+}
+function aboutCard(){
+  return '<div class="card"><h3>关于「燃」</h3>' +
+    '<div class="dim" style="line-height:1.75">自己用的健身记录工具。数据全部保存在本机，不上传、不注册、没有广告。</div>' +
+    '<div class="spread" style="margin-top:16px"><span>当前版本</span><span class="dim">' + VER + '</span></div>' +
+    '<button class="btn block" data-act="app:update" style="margin-top:14px">检查更新</button>' +
+    '<div class="dim" style="font-size:12px;margin-top:8px">会清掉离线缓存并重新加载，确保拿到最新版本。数据不受影响。</div>' +
+    '</div>' +
+    '<div class="card"><h3>免责声明</h3>' +
+    '<div class="dim" style="line-height:1.8">本小工具提供的数据（热量、营养素、体脂率、1RM、建议重量等）均为估算，仅供参考，非绝对准确。' +
+    '训练请以自身实际情况为准，量力而行。<b style="color:#fff">安全训练，稳步变强。</b></div></div>';
+}
+function viewSet(){
+  var p = ui.setPage || "";
+  if (p === "profile") return subHead("身体数据") + profileCard();
+  if (p === "rest") return subHead("组间休息") + restCard();
+  if (p === "ex") return subHead("我的动作") + exCard();
+  if (p === "data") return subHead("数据与备份") + dataCard();
+  if (p === "about") return subHead("关于与免责") + aboutCard();
+
+  var bf = bfOf();
+  return pageHead("设置", "燃 " + VER) +
+    '<div class="card" style="padding:2px 16px">' +
+    menuRow("身体数据", (db.profile.height || "—") + " cm · " + (db.profile.weight || "—") + " kg" +
+      (bf ? " · 体脂 " + bf + "%" : ""), "profile") +
+    menuRow("组间休息", (db.settings.auto ? "自动" : "手动") + " · " + db.settings.rest + " 秒 · 步进 " + db.settings.step + "kg", "rest") +
+    menuRow("我的动作", db.ex.length + " 个", "ex") +
+    '</div>' +
+    '<div class="card" style="padding:2px 16px">' +
+    menuRow("数据与备份", "导出 / 导入 / 清空", "data") +
+    menuRow("关于与免责", "版本 " + VER, "about") +
     '</div>';
-  return s;
 }
 
 /* ========== 动作选择面板 ========== */
@@ -1513,8 +1742,8 @@ function onboardHTML(){
     num("obWeight", "体重（kg）", p.weight, "例：70") +
     num("obBF", "体脂率（%，不知道可以留空）", "", "留空会自动估算") +
     '<div class="dim" style="font-size:12px;line-height:1.6;margin:2px 0 18px">' +
-      '数据只保存在这台手机里，不会上传到任何服务器。' +
-      '之后可以在「设置 → 身体数据」里随时修改。' +
+      '数据只保存在这台手机里，不会上传到任何服务器；之后可在「设置」里随时修改。' +
+      '<br>所有计算结果均为估算，仅供参考，请量力而行。' +
     '</div>' +
     '<button class="btn primary block" data-act="onb:save" style="height:48px">保存</button>' +
     '<button class="btn block" data-act="onb:skip" style="margin:10px 0 16px">以后再说</button>';
@@ -1706,6 +1935,29 @@ function closeEgg(){
   if (b) b.classList.remove("on");
 }
 
+function clearAllCaches(){
+  if (typeof caches === "undefined") return Promise.resolve();
+  return caches.keys().then(function(ks){
+    return Promise.all(ks.map(function(k){ return caches.delete(k); }));
+  }).catch(function(){});
+}
+function hardReload(){
+  toast("正在更新…");
+  var done = false;
+  function go(){ if (done) return; done = true; try { location.reload(); } catch(e){} }
+  try {
+    if (typeof navigator !== "undefined" && navigator.serviceWorker && navigator.serviceWorker.getRegistrations){
+      navigator.serviceWorker.getRegistrations().then(function(rs){
+        return Promise.all(rs.map(function(r){ return r.unregister().catch(function(){}); }));
+      }).catch(function(){}).then(clearAllCaches).then(function(){ setTimeout(go, 400); });
+      setTimeout(go, 2500);
+      return;
+    }
+  } catch(e){}
+  clearAllCaches().then(function(){ setTimeout(go, 200); });
+  setTimeout(go, 1500);
+}
+
 function toast(msg){
   var el = document.getElementById("toast");
   el.textContent = msg; el.classList.add("on");
@@ -1721,7 +1973,7 @@ document.addEventListener("click", function(ev){
   var act = t.getAttribute("data-act");
 
   if (act === "tab"){
-    ui.tab = t.getAttribute("data-tab"); ui.edit = null;
+    ui.tab = t.getAttribute("data-tab"); ui.edit = null; ui.setPage = "";
     var mm = document.getElementById("main");
     if (mm) mm.scrollTop = 0;
     render(); return;
@@ -1844,6 +2096,9 @@ document.addEventListener("click", function(ev){
       rec.p = r1((Number(f.p) || 0) * gr / 100);
       rec.c = r1((Number(f.c) || 0) * gr / 100);
       rec.f = r1((Number(f.f) || 0) * gr / 100);
+      rec.vc = r1((Number(f.vc) || 0) * gr / 100);
+      rec.va = r1((Number(f.va) || 0) * gr / 100);
+      rec.vd = r1((Number(f.vd) || 0) * gr / 100);
       rec.unit = String(f.unit || "").trim() ||
         (gr === 100 ? "100 g" : "1 份(" + gr + "g)");
     } else {
@@ -1853,6 +2108,9 @@ document.addEventListener("click", function(ev){
       rec.p = Number(f.p) || 0;
       rec.c = Number(f.c) || 0;
       rec.f = Number(f.f) || 0;
+      rec.vc = Number(f.vc) || 0;
+      rec.va = Number(f.va) || 0;
+      rec.vd = Number(f.vd) || 0;
       rec.unit = String(f.unit || "").trim() || "1 份";
     }
     db.foods.push(rec);
@@ -1889,7 +2147,34 @@ document.addEventListener("click", function(ev){
     var box2 = t.closest(".addset");
     var wv = Number(box2.querySelector('[data-v="w"]').textContent.replace(/[^\d.]/g,"")) || 0;
     var rv = Number(box2.querySelector('[data-v="r"]').textContent.replace(/[^\d.]/g,"")) || 1;
-    addSet(ei, wv, rv);
+    addSet(ei, wv, rv, ui.warm);
+    return;
+  }
+  if (act === "warm:toggle"){ ui.warm = !ui.warm; render(); return; }
+  if (act === "bw:add"){
+    var bei = Number(t.getAttribute("data-e"));
+    var bbox = t.closest(".addset");
+    var reps = Number(bbox.querySelector('[data-v="r"]').textContent.replace(/[^\d.]/g,"")) || 0;
+    var ba2 = db.active;
+    if (!ba2 || !ba2.entries[bei]) return;
+    if (reps <= 0){ toast("次数要大于 0"); return; }
+    ba2.entries[bei].sets.push({ w:0, r: Math.round(reps), warm:false });
+    save();
+    if (db.settings.auto) startRest(db.settings.rest);
+    render();
+    return;
+  }
+  if (act === "num:edit"){
+    var nb = t.closest(".addset");
+    var nk = t.getAttribute("data-k") || "w";
+    var cell = nb ? nb.querySelector('[data-v="' + nk + '"]') : null;
+    if (!cell) return;
+    var curv = String(cell.textContent).replace(/[^\d.]/g,"");
+    var nv = prompt("输入数值", curv);
+    if (nv === null) return;
+    var numv = Number(nv);
+    if (!isFinite(numv) || numv < 0){ toast("请输入数字"); return; }
+    cell.firstChild.textContent = String(Math.round(numv * 100) / 100);
     return;
   }
 
@@ -1960,6 +2245,16 @@ document.addEventListener("click", function(ev){
     ui.open = (ui.open === wid) ? null : wid;
     render(); return;
   }
+  if (act === "wo:rename"){
+    var rid = t.getAttribute("data-id"), rw = null;
+    for (var ri=0;ri<db.workouts.length;ri++) if (db.workouts[ri].id === rid) rw = db.workouts[ri];
+    if (!rw) return;
+    var rn = prompt("给这次训练起个名字（留空则用日期）", rw.name || "");
+    if (rn === null) return;
+    rw.name = String(rn).trim();
+    save(); render(); toast(rw.name ? "已命名" : "已恢复默认");
+    return;
+  }
   if (act === "hist:del"){
     var wid2 = t.getAttribute("data-id");
     if (confirm("删除这次训练记录？")){
@@ -1974,6 +2269,11 @@ document.addEventListener("click", function(ev){
   if (act === "pf:sex"){ db.profile.sex = t.getAttribute("data-v"); save(); render(); return; }
   if (act === "pf:bmrAuto"){ db.profile.bmrManual = 0; save(); render(); toast("已恢复自动"); return; }
   if (act === "pf:bfAuto"){ db.profile.bfManual = 0; save(); render(); toast("已恢复自动估算"); return; }
+
+  /* 设置二级菜单 */
+  if (act === "set:open"){ ui.setPage = t.getAttribute("data-page") || ""; render(); return; }
+  if (act === "set:back"){ ui.setPage = ""; render(); return; }
+  if (act === "app:update"){ hardReload(); return; }
 
   /* 首次使用引导 / 重新填写 */
   if (act === "onb:open"){
@@ -2079,6 +2379,12 @@ document.addEventListener("change", function(ev){
       db.profile[key] = Math.round(v * 10) / 10;
     }
     save(); render(); toast("已保存");
+    return;
+  }
+  if (ev.target.id === "stepIn"){
+    var sv = Number(ev.target.value);
+    if (!isNaN(sv) && sv >= 0.25 && sv <= 10){ db.settings.step = Math.round(sv * 100) / 100; save(); toast("已保存"); }
+    else { ev.target.value = db.settings.step; toast("请填 0.25 - 10"); }
     return;
   }
   if (ev.target.id === "restIn"){
