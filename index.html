@@ -131,6 +131,9 @@ select.search{appearance:none;-webkit-appearance:none}
 #tabs{position:relative;z-index:19;display:flex;flex:none;
   padding-bottom:var(--safe-b);background:var(--card);
   border-top:.5px solid var(--sep)}
+/* 向下延伸 80px，把 iPhone 底部安全区的黑边盖住 */
+#tabs::after{content:"";position:absolute;left:0;right:0;top:100%;height:80px;
+  background:var(--card);pointer-events:none}
 #tabs button{flex:1;height:var(--tabh);display:flex;flex-direction:column;align-items:center;
   justify-content:center;gap:3px;font-size:10px;color:var(--dim);font-weight:500}
 #tabs button.on{color:var(--acc)}
@@ -169,10 +172,6 @@ input.num:focus{outline:none;box-shadow:0 0 0 2px rgba(194,44,44,.5)}
   -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);
   box-shadow:0 8px 24px rgba(0,0,0,.5)}
 #toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
-
-/* 兜底：把导航栏下方的安全区颜色补齐，避免露出黑边 */
-#botfill{position:fixed;left:0;right:0;bottom:0;height:calc(env(safe-area-inset-bottom) + 64px);
-  background:var(--card);z-index:18;pointer-events:none}
 
 /* 长按确认按钮 */
 .hold{position:relative;overflow:hidden;user-select:none;-webkit-user-select:none;
@@ -254,7 +253,6 @@ input.num:focus{outline:none;box-shadow:0 0 0 2px rgba(194,44,44,.5)}
   <button data-act="tab" data-tab="set"><svg class="ti"><use href="#i-gear"></use></svg>设置</button>
 </nav>
 <div id="mask"><div id="sheet"></div></div>
-<div id="botfill"></div>
 <div id="celebrate"><canvas id="cvs"></canvas><div class="cel-card" id="celCard"></div></div>
 <div id="egg"><div class="egg-card" id="eggCard"></div></div>
 <div id="toast"></div>
@@ -262,7 +260,7 @@ input.num:focus{outline:none;box-shadow:0 0 0 2px rgba(194,44,44,.5)}
 (function(){
 "use strict";
 
-var VER = "v2.0";
+var VER = "v2.1";
 var QUOTES = [
   "没人看见的训练最算数。",
   "身体会记住你今天做的事。",
