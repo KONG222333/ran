@@ -1,5 +1,5 @@
 /* 燃 · 离线缓存 */
-const CACHE = "ran-v24";
+const CACHE = "ran-v25";
 const ASSETS = [
   "./",
   "./index.html",
@@ -7,7 +7,8 @@ const ASSETS = [
   "./icon-192.png",
   "./icon-512.png",
   "./icon-180.png",
-  "./icon-maskable-512.png"
+  "./icon-maskable-512.png",
+  "./logo-header.png"
 ];
 
 self.addEventListener("install", function (e) {
