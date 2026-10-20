@@ -20,21 +20,23 @@
   --r:12px; --tabh:50px; --safe-b:env(safe-area-inset-bottom);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;padding:0;background:var(--bg);color:var(--txt);
+html{height:100%;background:var(--bg)}
+body{margin:0;padding:0;height:100vh;height:100dvh;display:flex;flex-direction:column;
+  overflow:hidden;background:var(--bg);color:var(--txt);
   font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Helvetica Neue","Microsoft YaHei",sans-serif;
   font-size:17px;line-height:1.4;overscroll-behavior:none;-webkit-font-smoothing:antialiased}
 button{font-family:inherit;font-size:inherit;color:inherit;background:none;border:none;cursor:pointer}
 input,select,textarea{font-family:inherit;font-size:inherit}
 
-#hdr{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;
-  gap:12px;padding:calc(env(safe-area-inset-top) + 4px) 16px 4px;min-height:44px;
-  background:rgba(0,0,0,.74);-webkit-backdrop-filter:saturate(180%) blur(20px);
-  backdrop-filter:saturate(180%) blur(20px);border-bottom:.5px solid var(--sep)}
+#hdr{position:relative;z-index:20;display:flex;align-items:center;justify-content:space-between;
+  flex:none;gap:12px;padding:calc(env(safe-area-inset-top) + 4px) 16px 4px;min-height:44px;
+  background:rgba(0,0,0,.92);border-bottom:.5px solid var(--sep)}
 .brand{display:flex;align-items:baseline;gap:7px;font-weight:800;font-size:20px;letter-spacing:1px}
 .brand b{color:var(--acc)}
 .brand span{font-size:9px;letter-spacing:2.5px;color:var(--dim);font-weight:600}
 
-#main{padding:0 0 calc(var(--tabh) + var(--safe-b) + 28px);max-width:600px;margin:0 auto}
+#main{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:0 0 28px;width:100%;max-width:600px;margin:0 auto}
 .pt{font-size:34px;line-height:1.12;font-weight:800;letter-spacing:-.7px;margin:14px 16px 3px}
 .psub{font-size:15px;color:var(--dim);margin:0 16px 18px}
 .card{background:var(--card);border-radius:var(--r);padding:16px;margin:0 16px 16px}
@@ -126,9 +128,8 @@ select.search{appearance:none;-webkit-appearance:none}
 #timer .t small{font-size:11px;color:var(--dim);font-weight:500;display:block;letter-spacing:0}
 
 /* 底部导航 */
-#tabs{position:fixed;left:0;right:0;bottom:0;z-index:19;display:flex;
-  padding-bottom:var(--safe-b);background:rgba(28,28,30,.86);
-  -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);
+#tabs{position:relative;z-index:19;display:flex;flex:none;
+  padding-bottom:var(--safe-b);background:rgba(28,28,30,.98);
   border-top:.5px solid var(--sep)}
 #tabs button{flex:1;height:var(--tabh);display:flex;flex-direction:column;align-items:center;
   justify-content:center;gap:3px;font-size:10px;color:var(--dim);font-weight:500}
@@ -256,7 +257,7 @@ input.num:focus{outline:none;box-shadow:0 0 0 2px rgba(194,44,44,.5)}
 (function(){
 "use strict";
 
-var VER = "v1.8";
+var VER = "v1.9";
 var QUOTES = [
   "没人看见的训练最算数。",
   "身体会记住你今天做的事。",
@@ -1718,7 +1719,12 @@ document.addEventListener("click", function(ev){
   if (!t) return;
   var act = t.getAttribute("data-act");
 
-  if (act === "tab"){ ui.tab = t.getAttribute("data-tab"); ui.edit = null; render(); return; }
+  if (act === "tab"){
+    ui.tab = t.getAttribute("data-tab"); ui.edit = null;
+    var mm = document.getElementById("main");
+    if (mm) mm.scrollTop = 0;
+    render(); return;
+  }
 
   if (act === "wo:start"){ startWorkout(); return; }
   if (act === "wo:copy"){ copyLastWorkout(); return; }
