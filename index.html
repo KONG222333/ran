@@ -163,7 +163,7 @@ select.search{appearance:none;-webkit-appearance:none}
 #mask{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:30;display:none;
   -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
 #mask.on{display:block}
-#sheet{position:absolute;left:0;right:0;bottom:0;max-height:86vh;overflow-y:auto;
+#sheet{position:absolute;left:0;right:0;bottom:0;max-height:86%;overflow-y:auto;
   background:var(--card);border-radius:20px 20px 0 0;padding:26px 16px calc(20px + var(--safe-b));
   -webkit-overflow-scrolling:touch}
 #sheet::before{content:"";position:absolute;top:8px;left:50%;transform:translateX(-50%);
@@ -305,7 +305,7 @@ input.num:focus{outline:none;box-shadow:0 0 0 2px rgba(194,44,44,.5)}
 (function(){
 "use strict";
 
-var VER = "v3.4";
+var VER = "v3.5";
 var QUOTES = [
   "没人看见的训练最算数。",
   "身体会记住你今天做的事。",
@@ -2473,6 +2473,33 @@ document.addEventListener("change", function(ev){
   }
 });
 
+/* 键盘弹出时，把遮罩层收缩到「可视区域」，保证面板和搜索框不被挡住 */
+(function(){
+  var vv = (typeof window !== "undefined") ? window.visualViewport : null;
+  if (!vv) return;
+  function syncViewport(){
+    var m = document.getElementById("mask");
+    var sheet = document.getElementById("sheet");
+    if (!m) return;
+    var focused = document.activeElement;
+    var typing = focused && (focused.tagName === "INPUT" || focused.tagName === "SELECT");
+    if (typing && vv.height < window.innerHeight - 80){
+      m.style.height = vv.height + "px";
+      m.style.top = vv.offsetTop + "px";
+      m.style.bottom = "auto";
+      if (sheet) sheet.style.maxHeight = Math.max(180, vv.height - 24) + "px";
+    } else {
+      m.style.height = "";
+      m.style.top = "";
+      m.style.bottom = "0";
+      if (sheet) sheet.style.maxHeight = "";
+    }
+  }
+  vv.addEventListener("resize", syncViewport);
+  vv.addEventListener("scroll", syncViewport);
+  document.addEventListener("focusout", function(){ setTimeout(syncViewport, 120); });
+})();
+
 /* 点空白遮罩关闭底部面板 */
 var maskEl = document.getElementById("mask");
 if (maskEl){
@@ -2491,8 +2518,11 @@ document.addEventListener("focusin", function(ev){
   if (!el || (el.tagName !== "INPUT" && el.tagName !== "SELECT")) return;
   if (!el.closest || !el.closest("#sheet")) return;
   setTimeout(function(){
-    try { el.scrollIntoView({ block:"center", behavior:"smooth" }); } catch(e){}
-  }, 260);
+    try { el.scrollIntoView({ block:"center" }); } catch(e){}
+  }, 320);
+  setTimeout(function(){
+    try { el.scrollIntoView({ block:"center" }); } catch(e){}
+  }, 620);
 });
 
 /* 长按 3 秒才结束训练，防止误触 */
