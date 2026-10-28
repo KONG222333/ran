@@ -310,7 +310,7 @@ input.num:focus{outline:none;box-shadow:0 0 0 2px rgba(194,44,44,.5)}
 (function(){
 "use strict";
 
-var VER = "v3.7";
+var VER = "v3.8";
 var QUOTES = [
   "没人看见的训练最算数。",
   "身体会记住你今天做的事。",
@@ -829,20 +829,25 @@ function setOf(where, ei, si){
 }
 
 /* ========== 计时器 ========== */
-var rest = { left:0, timer:null };
+var rest = { left:0, timer:null, endAt:0 };
+/* 用「结束时刻」而不是「每秒减一」，切后台、锁屏回来时不会丢时间 */
 function startRest(sec){
-  rest.left = Math.max(1, Math.round(sec));
+  var n = Math.max(1, Math.round(sec));
+  rest.left = n;
+  rest.endAt = Date.now() + n * 1000;
   if (rest.timer) clearInterval(rest.timer);
-  rest.timer = setInterval(function(){
-    rest.left--;
-    if (rest.left <= 0){ stopRest(); alertRestEnd(); return; }
-    paintTimer();
-  }, 1000);
+  rest.timer = setInterval(tickRest, 250);
   paintTimer();
+}
+function tickRest(){
+  if (!rest.endAt) return;
+  var left = Math.round((rest.endAt - Date.now()) / 1000);
+  if (left <= 0){ stopRest(); alertRestEnd(); return; }
+  if (left !== rest.left){ rest.left = left; paintTimer(); }
 }
 function stopRest(){
   if (rest.timer) clearInterval(rest.timer);
-  rest.timer = null; rest.left = 0; paintTimer();
+  rest.timer = null; rest.left = 0; rest.endAt = 0; paintTimer();
 }
 function paintTimer(){
   var el = document.getElementById("timer"), v = document.getElementById("tval");
@@ -906,13 +911,18 @@ function setWake(on){
   } catch(e){}
 }
 
-/* 切回前台时，如果还在训练就重新要求常亮 */
+/* 切回前台时：补算休息倒计时 + 重新要求常亮 */
 document.addEventListener("visibilitychange", function(){
-  if (document.visibilityState === "visible" && wakeWanted && !wake){
-    wakeWanted = false;
-    setWake(true);
+  if (document.visibilityState === "visible"){
+    if (rest.endAt) tickRest();
+    if (wakeWanted && !wake){
+      wakeWanted = false;
+      setWake(true);
+    }
   }
 });
+window.addEventListener("pageshow", function(){ if (rest.endAt) tickRest(); });
+window.addEventListener("focus", function(){ if (rest.endAt) tickRest(); });
 
 /* ===== 个人纪录 ===== */
 function prList(){
