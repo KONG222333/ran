@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no,interactive-widget=resizes-content">
 <meta name="theme-color" content="#000000">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -163,6 +163,9 @@ select.search{appearance:none;-webkit-appearance:none}
 #mask{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:30;display:none;
   -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
 #mask.on{display:block}
+@media (pointer:coarse){
+  #mask.typing #sheet{max-height:46%;scroll-behavior:auto}
+}
 #sheet{position:absolute;left:0;right:0;bottom:0;max-height:86%;overflow-y:auto;
   background:var(--card);border-radius:20px 20px 0 0;padding:26px 16px calc(20px + var(--safe-b));
   -webkit-overflow-scrolling:touch}
@@ -305,7 +308,7 @@ input.num:focus{outline:none;box-shadow:0 0 0 2px rgba(194,44,44,.5)}
 (function(){
 "use strict";
 
-var VER = "v3.5";
+var VER = "v3.6";
 var QUOTES = [
   "没人看见的训练最算数。",
   "身体会记住你今天做的事。",
@@ -1752,7 +1755,7 @@ function viewSet(){
 function paintSheet(){
   var mask = document.getElementById("mask"), sheet = document.getElementById("sheet");
   if (!ui.pick && !ui.foodPick && !ui.foodForm && !ui.exForm && !ui.onboard){
-    mask.classList.remove("on"); sheet.innerHTML = ""; return;
+    mask.classList.remove("on"); mask.classList.remove("typing"); sheet.innerHTML = ""; return;
   }
   mask.classList.add("on");
   if (ui.onboard){ sheet.innerHTML = onboardHTML(); return; }
@@ -2472,6 +2475,29 @@ document.addEventListener("change", function(ev){
     else { ev.target.value = db.settings.rest; toast("请填 5 - 600"); }
   }
 });
+
+/* 聚焦输入框：弹层切到「打字模式」，保证搜索框永远在键盘上方 */
+(function(){
+  function isField(el){ return el && (el.tagName === "INPUT" || el.tagName === "SELECT" || el.tagName === "TEXTAREA"); }
+  document.addEventListener("focusin", function(e){
+    var el = e.target;
+    if (!isField(el) || !el.closest || !el.closest("#sheet")) return;
+    var m = document.getElementById("mask"), sh = document.getElementById("sheet");
+    if (!m) return;
+    m.classList.add("typing");
+    if (sh) sh.scrollTop = 0;
+    setTimeout(function(){ try { el.scrollIntoView({ block:"start" }); } catch(err){} }, 60);
+  }, true);
+  document.addEventListener("focusout", function(e){
+    if (!isField(e.target)) return;
+    setTimeout(function(){
+      var a = document.activeElement;
+      if (a && a.closest && a.closest("#sheet")) return;
+      var m = document.getElementById("mask");
+      if (m) m.classList.remove("typing");
+    }, 150);
+  }, true);
+})();
 
 /* 键盘弹出时，把遮罩层收缩到「可视区域」，保证面板和搜索框不被挡住 */
 (function(){
