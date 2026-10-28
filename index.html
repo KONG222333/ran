@@ -163,12 +163,14 @@ select.search{appearance:none;-webkit-appearance:none}
 #mask{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:30;display:none;
   -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
 #mask.on{display:block}
-@media (pointer:coarse){
-  #mask.typing #sheet{max-height:46%;scroll-behavior:auto}
-}
+
 #sheet{position:absolute;left:0;right:0;bottom:0;max-height:86%;overflow-y:auto;
   background:var(--card);border-radius:20px 20px 0 0;padding:26px 16px calc(20px + var(--safe-b));
   -webkit-overflow-scrolling:touch}
+#sheet.full{top:0;bottom:0;max-height:100%;border-radius:0;
+  padding-top:calc(10px + env(safe-area-inset-top, 0px));
+  padding-bottom:calc(12px + var(--safe-b))}
+#sheet.full::before{display:none}
 #sheet::before{content:"";position:absolute;top:8px;left:50%;transform:translateX(-50%);
   width:36px;height:5px;border-radius:3px;background:#48484a}
 .grp{font-size:12px;color:var(--dim);padding:16px 2px 6px;font-weight:600;letter-spacing:.4px;text-transform:none}
@@ -308,7 +310,7 @@ input.num:focus{outline:none;box-shadow:0 0 0 2px rgba(194,44,44,.5)}
 (function(){
 "use strict";
 
-var VER = "v3.6";
+var VER = "v3.7";
 var QUOTES = [
   "没人看见的训练最算数。",
   "身体会记住你今天做的事。",
@@ -360,7 +362,18 @@ var DEF = [
   /* 户外 */
   ["户外","慢跑","cardio",8.0,1],["户外","快走","cardio",4.3,1],["户外","骑行","cardio",7.5,1],
   ["户外","爬山","cardio",6.5,1],["户外","徒步","cardio",5.3,1],["户外","爬楼梯","cardio",8.8,1],
-  ["户外","篮球","cardio",6.5,0],["户外","羽毛球","cardio",5.5,0]
+  ["户外","篮球","cardio",6.5,0],["户外","羽毛球","cardio",5.5,0],
+  /* —— 补充常见动作 —— */
+  ["胸","史密斯卧推","free"],["胸","上斜器械推胸","free"],["胸","蝴蝶机夹胸","free"],
+  ["背","窄握高位下拉","free"],["背","器械划船","free"],["背","反手引体向上","free",0,0,1],["背","单臂绳索下拉","free"],
+  ["腿","史密斯深蹲","free"],["腿","前蹲","free"],["腿","相扑硬拉","free"],["腿","站姿提踵","free"],
+  ["腿","坐姿提踵","free"],["腿","侧弓步","free"],
+  ["臀","杠铃臀推","free"],["臀","髋外展","free"],["臀","单腿硬拉","free"],
+  ["肩","器械侧平举","free"],["肩","直立划船","free"],
+  ["手臂","哑铃颈后臂屈伸","free"],["手臂","仰卧臂屈伸","free"],["手臂","反握弯举","free"],["手臂","腕弯举","free"],
+  ["核心","仰卧抬腿","free",0,0,1],["核心","死虫式","free",0,0,1],["核心","登山跑","free",0,0,1],["核心","空中自行车","free",0,0,1],
+  ["户外","网球","cardio",7.3,0],["户外","足球","cardio",7.5,0],["户外","乒乓球","cardio",4.0,0],
+  ["户外","滑板","cardio",5.0,0],["户外","轮滑","cardio",7.0,0]
 ];
 
 var db, ui = { tab:"train", pick:false, foodPick:false, foodForm:false, foodQ:"", foodCat:"",
@@ -436,7 +449,35 @@ var DEF_FOODS = [
   ["甜甜圈","1 个",280,"放纵",3,32,15],["辣条","1 包",150,"放纵",3,18,7],
   ["方便面","1 包",470,"放纵",9,62,20],["炸串","1 串",120,"放纵",5,8,8],
   ["啤酒","330 ml",140,"放纵",1,11,0],["可乐","330 ml",140,"放纵",0,35,0],
-  ["雪碧","330 ml",140,"放纵",0,36,0]
+  ["雪碧","330 ml",140,"放纵",0,36,0],
+  /* —— 补充常见食物 —— */
+  ["牛肉面","1 碗",480,"主食",22,65,14],["炒面","1 盘",520,"主食",14,70,18],
+  ["炒粉","1 盘",500,"主食",10,72,17],["馄饨","1 碗",300,"主食",12,42,8],
+  ["肉夹馍","1 个",380,"主食",16,42,15],["凉皮","1 份",360,"主食",8,55,11],
+  ["烧饼","1 个",280,"主食",7,40,10],["粽子","1 个",300,"主食",6,50,8],
+  ["紫薯","100 g",82,"主食",1.5,18,0.2],["山药","100 g",57,"主食",1.9,12,0.2],
+  ["南瓜","100 g",26,"主食",1,6.5,0.1],["螺蛳粉","1 碗",700,"主食",20,80,30],
+  ["寿司","8 贯",320,"主食",12,52,6],["饭团","1 个",200,"主食",5,38,3],
+  ["蛋挞","1 个",200,"主食",3,20,12],
+  ["鸡腿肉","100 g",190,"蛋白",19,0,12],["牛腱","100 g",150,"蛋白",26,0,5],
+  ["牛腩","100 g",280,"蛋白",17,0,23],["羊肉串","1 串",40,"蛋白",4,0,3],
+  ["虾仁","100 g",90,"蛋白",20,1,0.5],["鳕鱼","100 g",82,"蛋白",18,0,0.7],
+  ["金枪鱼罐头","100 g",116,"蛋白",26,0,1],["鸡蛋清","2 个",34,"蛋白",7,0.5,0.1],
+  ["老豆腐","100 g",81,"蛋白",8,4,4],["豆腐干","100 g",140,"蛋白",16,4,8],
+  ["腐竹","100 g",460,"蛋白",45,22,22],["猪肝","100 g",129,"蛋白",19,6,4],
+  ["芹菜","100 g",16,"蔬果",0.7,3,0.2],["白菜","100 g",17,"蔬果",1.5,3.2,0.1],
+  ["蘑菇","100 g",22,"蔬果",3.1,3.3,0.3],["木耳","100 g",21,"蔬果",1.5,6,0.2],
+  ["海带","100 g",13,"蔬果",1.2,2.1,0.1],["茄子","100 g",21,"蔬果",1.1,4.9,0.2],
+  ["青椒","100 g",22,"蔬果",1,5,0.2],["豆角","100 g",30,"蔬果",2.5,5.7,0.2],
+  ["牛油果","1 个",240,"蔬果",3,12,22],["蓝莓","100 g",57,"蔬果",0.7,14,0.3],
+  ["火龙果","100 g",60,"蔬果",1.2,13,0.4],["芒果","1 个",135,"蔬果",1,35,0.6],
+  ["桃","1 个",60,"蔬果",1,14,0.3],["榴莲","100 g",147,"蔬果",1.5,28,5],
+  ["无糖酸奶","150 g",90,"乳品",5,6,5],["脱脂牛奶","250 ml",85,"乳品",8,12,0.3],
+  ["豆奶","250 ml",110,"乳品",7,8,5],
+  ["腰果","30 g",165,"零食",5,9,13],["开心果","30 g",170,"零食",6,7,14],
+  ["巴旦木","30 g",175,"零食",6,6,15],["葡萄干","30 g",90,"零食",1,22,0],
+  ["泡面","1 包",470,"放纵",9,60,20],["麻辣烫","1 碗",600,"放纵",25,40,35],
+  ["烧烤","10 串",500,"放纵",25,10,40],["火锅","1 人份",800,"放纵",40,30,55]
 ];
 /* 每「1 份」的维生素估算（维C mg / 维A µg / 维D µg）—— 近似值，仅供参考 */
 var VITS = {
@@ -480,7 +521,7 @@ function normalize(d){
     }
   });
   /* 老版本升级：补上后来新增的动作（有氧、户外、更多器械），同名跳过 */
-  if ((d.exSeed || 0) < 2){
+  if ((d.exSeed || 0) < 3){
     var haveEx = {};
     d.ex.forEach(function(x){ haveEx[x.name] = 1; });
     DEF.forEach(function(x){
@@ -490,7 +531,15 @@ function normalize(d){
           kind: cd ? "cardio" : "strength", met:x[3] || 0, inc: !!x[4] });
       }
     });
-    d.exSeed = 2;
+    d.exSeed = 3;
+  }
+  if ((d.foodSeed || 0) < 2){
+    var haveFood = {};
+    d.foods.forEach(function(x){ haveFood[x.name] = 1; });
+    DEF_FOODS.forEach(function(x){
+      if (!haveFood[x[0]]) d.foods.push({ id:uid(), name:x[0], unit:x[1], kcal:x[2], cat:x[3], p:x[4], c:x[5], f:x[6] });
+    });
+    d.foodSeed = 2;
   }
   d.workouts = (d.workouts || []).filter(function(w){ return w && typeof w === "object"; });
   d.workouts.forEach(function(w){
@@ -1755,9 +1804,10 @@ function viewSet(){
 function paintSheet(){
   var mask = document.getElementById("mask"), sheet = document.getElementById("sheet");
   if (!ui.pick && !ui.foodPick && !ui.foodForm && !ui.exForm && !ui.onboard){
-    mask.classList.remove("on"); mask.classList.remove("typing"); sheet.innerHTML = ""; return;
+    mask.classList.remove("on"); sheet.classList.remove("full"); sheet.innerHTML = ""; return;
   }
   mask.classList.add("on");
+  sheet.classList.toggle("full", !!(ui.pick || ui.foodPick));
   if (ui.onboard){ sheet.innerHTML = onboardHTML(); return; }
   if (ui.exForm){ sheet.innerHTML = exFormHTML(); return; }
   if (ui.foodForm){ sheet.innerHTML = foodFormHTML(); return; }
@@ -2475,56 +2525,6 @@ document.addEventListener("change", function(ev){
     else { ev.target.value = db.settings.rest; toast("请填 5 - 600"); }
   }
 });
-
-/* 聚焦输入框：弹层切到「打字模式」，保证搜索框永远在键盘上方 */
-(function(){
-  function isField(el){ return el && (el.tagName === "INPUT" || el.tagName === "SELECT" || el.tagName === "TEXTAREA"); }
-  document.addEventListener("focusin", function(e){
-    var el = e.target;
-    if (!isField(el) || !el.closest || !el.closest("#sheet")) return;
-    var m = document.getElementById("mask"), sh = document.getElementById("sheet");
-    if (!m) return;
-    m.classList.add("typing");
-    if (sh) sh.scrollTop = 0;
-    setTimeout(function(){ try { el.scrollIntoView({ block:"start" }); } catch(err){} }, 60);
-  }, true);
-  document.addEventListener("focusout", function(e){
-    if (!isField(e.target)) return;
-    setTimeout(function(){
-      var a = document.activeElement;
-      if (a && a.closest && a.closest("#sheet")) return;
-      var m = document.getElementById("mask");
-      if (m) m.classList.remove("typing");
-    }, 150);
-  }, true);
-})();
-
-/* 键盘弹出时，把遮罩层收缩到「可视区域」，保证面板和搜索框不被挡住 */
-(function(){
-  var vv = (typeof window !== "undefined") ? window.visualViewport : null;
-  if (!vv) return;
-  function syncViewport(){
-    var m = document.getElementById("mask");
-    var sheet = document.getElementById("sheet");
-    if (!m) return;
-    var focused = document.activeElement;
-    var typing = focused && (focused.tagName === "INPUT" || focused.tagName === "SELECT");
-    if (typing && vv.height < window.innerHeight - 80){
-      m.style.height = vv.height + "px";
-      m.style.top = vv.offsetTop + "px";
-      m.style.bottom = "auto";
-      if (sheet) sheet.style.maxHeight = Math.max(180, vv.height - 24) + "px";
-    } else {
-      m.style.height = "";
-      m.style.top = "";
-      m.style.bottom = "0";
-      if (sheet) sheet.style.maxHeight = "";
-    }
-  }
-  vv.addEventListener("resize", syncViewport);
-  vv.addEventListener("scroll", syncViewport);
-  document.addEventListener("focusout", function(){ setTimeout(syncViewport, 120); });
-})();
 
 /* 点空白遮罩关闭底部面板 */
 var maskEl = document.getElementById("mask");
