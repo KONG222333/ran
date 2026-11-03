@@ -134,6 +134,7 @@ select.search{appearance:none;-webkit-appearance:none}
 .stepper button{width:38px;height:38px;font-size:20px;color:var(--acc);font-weight:600}
 .stepper button:active{background:rgba(255,255,255,.08)}
 .stepper .num{min-width:64px;text-align:center;font-size:17px;font-weight:600;font-variant-numeric:tabular-nums}
+.numin{width:58px;background:rgba(120,120,128,.22);border:0;border-radius:8px;color:#fff;font:inherit;font-size:19px;font-weight:700;text-align:center;padding:3px 0;outline:none;-webkit-appearance:none;appearance:none}
 .stepper .unit{font-size:10px;color:var(--dim);display:block;font-weight:500;line-height:1}
 .addset .lbl{font-size:13px;color:var(--dim);width:100%;margin-bottom:2px}
 .addset.cardio .stepper button{width:32px}
@@ -310,7 +311,7 @@ input.num:focus{outline:none;box-shadow:0 0 0 2px rgba(194,44,44,.5)}
 (function(){
 "use strict";
 
-var VER = "v3.8";
+var VER = "v3.9";
 var QUOTES = [
   "没人看见的训练最算数。",
   "身体会记住你今天做的事。",
@@ -373,7 +374,13 @@ var DEF = [
   ["手臂","哑铃颈后臂屈伸","free"],["手臂","仰卧臂屈伸","free"],["手臂","反握弯举","free"],["手臂","腕弯举","free"],
   ["核心","仰卧抬腿","free",0,0,1],["核心","死虫式","free",0,0,1],["核心","登山跑","free",0,0,1],["核心","空中自行车","free",0,0,1],
   ["户外","网球","cardio",7.3,0],["户外","足球","cardio",7.5,0],["户外","乒乓球","cardio",4.0,0],
-  ["户外","滑板","cardio",5.0,0],["户外","轮滑","cardio",7.0,0]
+  ["户外","滑板","cardio",5.0,0],["户外","轮滑","cardio",7.0,0],
+  /* —— 补充：腿 / 胸 / 肩 / 手臂 / 核心 —— */
+  ["腿","倒蹬","free"],["腿","腿内收","free"],["腿","单腿腿举","free"],
+  ["胸","下斜杠铃卧推","free"],["胸","下斜哑铃卧推","free"],
+  ["肩","俯身哑铃飞鸟","free"],["肩","侧卧侧平举","free"],
+  ["手臂","绳索过头臂屈伸","free"],["手臂","绳索高位弯举","free"],
+  ["核心","卷腹机","free"],["核心","悬垂提膝","free",0,0,1]
 ];
 
 var db, ui = { tab:"train", pick:false, foodPick:false, foodForm:false, foodQ:"", foodCat:"",
@@ -403,7 +410,7 @@ function defaults(){
   };
 }
 
-var CATS = ["主食","蛋白","蔬果","乳品","零食","放纵"];
+var CATS = ["主食","蛋白","蔬果","乳品","饮品","零食","放纵"];
 /* [名称, 一份量, 千卡, 分类, 蛋白g, 碳水g, 脂肪g]  —— 都是「1 份」的数值 */
 var DEF_FOODS = [
   /* 主食 */
@@ -436,6 +443,14 @@ var DEF_FOODS = [
   ["牛奶","250 ml",135,"乳品",8,12,7],["酸奶","1 杯(150g)",110,"乳品",5,12,4],
   ["奶酪","1 片",80,"乳品",5,0.5,6.5],["豆浆","250 ml",80,"乳品",7,4,4],
   ["拿铁","1 杯(中)",120,"乳品",6,10,6],
+  /* —— 健身饮品 —— */
+  ["乳清蛋白粉","1 勺(30g)",120,"饮品",24,3,1.5],["增肌粉","1 勺(50g)",200,"饮品",25,25,2],
+  ["肌酸","5 g",0,"饮品",0,0,0],["BCAA","1 份",10,"饮品",2,1,0],
+  ["运动饮料","500 ml",130,"饮品",0,33,0],["电解质水","500 ml",0,"饮品",0,0,0],
+  ["能量饮料","250 ml",110,"饮品",0,28,0],["黑咖啡","1 杯(240ml)",5,"饮品",0.3,0,0],
+  ["美式咖啡","1 杯(360ml)",10,"饮品",0.5,2,0],["椰子水","330 ml",60,"饮品",0.7,15,0],
+  ["无糖气泡水","330 ml",0,"饮品",0,0,0],["蜂蜜水","250 ml",65,"饮品",0,16,0],
+  ["柠檬水","250 ml",10,"饮品",0,3,0],
   /* 零食 */
   ["薯片","1 小包",152,"零食",2,15,9],["坚果","30 g",180,"零食",5,6,15],
   ["巧克力","1 块",75,"零食",0.7,8,4.5],["饼干","1 片",50,"零食",0.6,7,2.4],
@@ -494,10 +509,12 @@ var VITS = {
 
 function normalize(d){
   if (!d || typeof d !== "object") d = defaults();
-  if (!d.settings || typeof d.settings !== "object") d.settings = { rest:90, auto:true };
+  if (!d.settings || typeof d.settings !== "object") d.settings = { rest:90, auto:true, autoEnd:false, autoEndMin:30 };
   if (typeof d.settings.rest !== "number") d.settings.rest = 90;
   if (typeof d.settings.auto !== "boolean") d.settings.auto = true;
   if (typeof d.settings.step !== "number" || d.settings.step <= 0) d.settings.step = 2.5;
+  if (typeof d.settings.autoEnd !== "boolean") d.settings.autoEnd = false;
+  if (!(Number(d.settings.autoEndMin) > 0)) d.settings.autoEndMin = 30;
   if (!Array.isArray(d.ex)) d.ex = [];
   if (!Array.isArray(d.workouts)) d.workouts = [];
   if (!Array.isArray(d.meals)) d.meals = [];
@@ -521,25 +538,28 @@ function normalize(d){
     }
   });
   /* 老版本升级：补上后来新增的动作（有氧、户外、更多器械），同名跳过 */
-  if ((d.exSeed || 0) < 3){
+  if ((d.exSeed || 0) < 4){
     var haveEx = {};
     d.ex.forEach(function(x){ haveEx[x.name] = 1; });
+    var bwNames = {};
     DEF.forEach(function(x){
+      if (x[5]) bwNames[x[1]] = 1;
       if (!haveEx[x[1]]){
         var cd = CARDIO_GROUPS.indexOf(x[0]) >= 0;
         d.ex.push({ id:uid(), name:x[1], group:x[0], type:"free",
-          kind: cd ? "cardio" : "strength", met:x[3] || 0, inc: !!x[4] });
+          kind: cd ? "cardio" : "strength", met:x[3] || 0, inc: !!x[4], bw: !!x[5] });
       }
     });
-    d.exSeed = 3;
+    d.ex.forEach(function(x){ if (bwNames[x.name] && !x.bw) x.bw = true; });
+    d.exSeed = 4;
   }
-  if ((d.foodSeed || 0) < 2){
+  if ((d.foodSeed || 0) < 3){
     var haveFood = {};
     d.foods.forEach(function(x){ haveFood[x.name] = 1; });
     DEF_FOODS.forEach(function(x){
       if (!haveFood[x[0]]) d.foods.push({ id:uid(), name:x[0], unit:x[1], kcal:x[2], cat:x[3], p:x[4], c:x[5], f:x[6] });
     });
-    d.foodSeed = 2;
+    d.foodSeed = 3;
   }
   d.workouts = (d.workouts || []).filter(function(w){ return w && typeof w === "object"; });
   d.workouts.forEach(function(w){
@@ -774,10 +794,19 @@ function copyLastWorkout(){
 
 function startWorkout(){
   ui.warm = false;
-  db.active = { id:uid(), date:today(), start:Date.now(), entries:[] };
+  db.active = { id:uid(), date:today(), start:Date.now(), lastAt:Date.now(), entries:[] };
   save(); ui.tab="train"; render(); toast("开始训练");
 }
-function finishWorkout(){
+function checkAutoEnd(){
+  var a = db.active;
+  if (!a || !db.settings || !db.settings.autoEnd) return;
+  var lim = (Number(db.settings.autoEndMin) || 30) * 60000;
+  var last = Number(a.lastAt) || Number(a.start) || 0;
+  if (!last || Date.now() - last < lim) return;
+  finishWorkout(true);
+  toast("长时间没记录，已自动结束训练");
+}
+function finishWorkout(silent){
   var a = db.active;
   if (!a) return;
   var total = 0, i;
@@ -797,7 +826,7 @@ function finishWorkout(){
   db.workouts.push(a);
   db.active = null;
   stopRest(); save(); render();
-  celebrate(a);
+  if (!silent) celebrate(a);
 }
 function addEntry(exId){
   var a = db.active; if (!a) return;
@@ -1752,6 +1781,18 @@ function restCard(){
     '· 重量步进是 ± 按钮每次加减的量。哑铃不是 2.5 的倍数（比如 2.4 / 6.8kg）时，改这里，或训练时直接点数字输入。</div>' +
     '</div>';
 }
+function autoEndCard(){
+  return '<div class="card">' +
+    '<div class="spread" style="margin-bottom:18px"><span>无操作自动结束训练</span>' +
+    '<div class="switch ' + (db.settings.autoEnd ? "on" : "") + '" data-act="set:autoEnd"></div></div>' +
+    '<div class="spread"><span>闲置多久算结束</span>' +
+    '<div class="row" style="gap:8px"><input class="num" id="autoEndIn" type="number" inputmode="numeric" min="5" step="5" value="' + db.settings.autoEndMin + '"><span class="dim">分钟</span></div></div>' +
+    '<div class="dim" style="font-size:12px;line-height:1.7;margin-top:16px">' +
+    '· 训练中超过这个时间没有记录任何一组（忘了点结束就走了），下次打开 App 会自动结束这次训练并保存。<br>' +
+    '· 只要有在记录，计时就会重新开始。<br>' +
+    '· 一次都没记录的空训练不会被保存。</div>' +
+    '</div>';
+}
 function exCard(){
   var s = '<div class="card"><div class="spread" style="margin-bottom:6px"><div class="ch" style="margin:0"><svg><use href="#i-list"></use></svg><h3>动作库</h3></div>' +
     '<button class="btn sm" data-act="ex:new">+ 新增</button></div>';
@@ -1792,6 +1833,7 @@ function viewSet(){
   var p = ui.setPage || "";
   if (p === "profile") return subHead("身体数据") + profileCard();
   if (p === "rest") return subHead("组间休息") + restCard();
+  if (p === "autoend") return subHead("训练自动结束") + autoEndCard();
   if (p === "ex") return subHead("我的动作") + exCard();
   if (p === "data") return subHead("数据与备份") + dataCard();
   if (p === "about") return subHead("关于与免责") + aboutCard();
@@ -1802,6 +1844,7 @@ function viewSet(){
     menuRow("身体数据", (db.profile.height || "—") + " cm · " + (db.profile.weight || "—") + " kg" +
       (bf ? " · 体脂 " + bf + "%" : ""), "profile", "i-user") +
     menuRow("组间休息", (db.settings.auto ? "自动" : "手动") + " · " + db.settings.rest + " 秒 · 步进 " + db.settings.step + "kg", "rest", "i-timer") +
+    menuRow("训练自动结束", db.settings.autoEnd ? (db.settings.autoEndMin + " 分钟无操作自动结束") : "关闭", "autoend", "i-timer") +
     menuRow("我的动作", db.ex.length + " 个", "ex", "i-list") +
     '</div>' +
     '<div class="card" style="padding:2px 16px">' +
@@ -1826,8 +1869,15 @@ function paintSheet(){
     '<button class="iconbtn" data-act="ex:close">✕</button></div>' +
     '<input class="search" id="exSearch" type="text" autocomplete="off" ' +
       'placeholder="搜索动作，例：卧推 / 跑" value="' + esc(ui.exQ || "") + '">';
+  s += '<div class="cats">';
+  s += '<button class="' + (!ui.exFilter ? "on" : "") + '" data-act="ecat" data-cat="">全部</button>';
+  for (var gc=0;gc<GROUPS_ALL.length;gc++){
+    s += '<button class="' + (ui.exFilter === GROUPS_ALL[gc] ? "on" : "") + '" data-act="ecat" data-cat="' + GROUPS_ALL[gc] + '">' + GROUPS_ALL[gc] + '</button>';
+  }
+  s += '</div>';
   var shown = 0;
   for (var g=0;g<GROUPS_ALL.length;g++){
+    if (ui.exFilter && ui.exFilter !== GROUPS_ALL[g]) continue;
     var list = db.ex.filter(function(x){ return x.group === GROUPS_ALL[g]; });
     if (!list.length) continue;
     shown++;
@@ -2099,6 +2149,7 @@ document.addEventListener("click", function(ev){
   var t = ev.target.closest("[data-act]");
   if (!t) return;
   var act = t.getAttribute("data-act");
+  if (db.active && /^(st:|set:|bw:|cardio:|ex:add|warm:|timer:start)/.test(act)) db.active.lastAt = Date.now();
 
   if (act === "tab"){
     ui.tab = t.getAttribute("data-tab"); ui.edit = null; ui.setPage = ""; ui.histPage = "";
@@ -2175,6 +2226,14 @@ document.addEventListener("click", function(ev){
 
   if (act === "meal:open"){ ui.foodPick = true; ui.foodQ = ""; ui.foodCat = ""; paintSheet(); return; }
   if (act === "meal:close"){ ui.foodPick = false; paintSheet(); return; }
+  if (act === "ecat"){
+    ui.exFilter = t.getAttribute("data-cat") || "";
+    paintSheet();
+    var se = document.getElementById("exSearch");
+    if (se && se.focus) { try { se.focus(); } catch(e){} }
+    filterSheet(ui.exQ);
+    return;
+  }
   if (act === "fcat"){
     ui.foodCat = t.getAttribute("data-cat") || "";
     paintSheet();
@@ -2308,13 +2367,25 @@ document.addEventListener("click", function(ev){
     var nb = t.closest(".addset");
     var nk = t.getAttribute("data-k") || "w";
     var cell = nb ? nb.querySelector('[data-v="' + nk + '"]') : null;
-    if (!cell) return;
-    var curv = String(cell.textContent).replace(/[^\d.]/g,"");
-    var nv = prompt("输入数值", curv);
-    if (nv === null) return;
-    var numv = Number(nv);
-    if (!isFinite(numv) || numv < 0){ toast("请输入数字"); return; }
-    cell.firstChild.textContent = String(Math.round(numv * 100) / 100);
+    if (!cell || cell.querySelector("input")) return;
+    var uel = cell.querySelector(".unit");
+    var uhtml = uel ? uel.outerHTML : "";
+    var oldv = String(cell.textContent).replace(/[^\d.]/g,"") || "0";
+    cell.innerHTML = '<input class="numin" type="text" inputmode="decimal" value="' + oldv + '">';
+    var inp = cell.querySelector("input");
+    if (!inp) return;
+    try { inp.focus(); inp.select(); } catch(e){}
+    var committed = false;
+    var commit = function(){
+      if (committed) return; committed = true;
+      var v = Number(String(inp.value).replace(/[^\d.]/g, ""));
+      var out = (isFinite(v) && v >= 0) ? String(Math.round(v * 100) / 100) : oldv;
+      if (cell.contains(inp)) cell.innerHTML = out + uhtml;
+    };
+    inp.addEventListener("blur", commit);
+    inp.addEventListener("keydown", function(e2){
+      if (e2.key === "Enter"){ e2.preventDefault(); try { inp.blur(); } catch(e){} }
+    });
     return;
   }
 
@@ -2414,6 +2485,7 @@ document.addEventListener("click", function(ev){
 
   /* 设置二级菜单 */
   if (act === "set:open"){ ui.setPage = t.getAttribute("data-page") || ""; render(); return; }
+  if (act === "set:autoEnd"){ db.settings.autoEnd = !db.settings.autoEnd; save(); render(); return; }
   if (act === "set:back"){ ui.setPage = ""; render(); return; }
   if (act === "app:update"){ hardReload(); return; }
 
@@ -2505,6 +2577,11 @@ document.addEventListener("input", function(ev){
 });
 
 document.addEventListener("change", function(ev){
+  if (ev.target && ev.target.id === "autoEndIn"){
+    var av = Number(ev.target.value);
+    if (!isFinite(av) || av < 5){ ev.target.value = db.settings.autoEndMin; toast("最少 5 分钟"); return; }
+    db.settings.autoEndMin = Math.round(av); save(); return;
+  }
   var key = ev.target.getAttribute && ev.target.getAttribute("data-pf");
   if (key){
     var v = Number(ev.target.value);
